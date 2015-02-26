@@ -12,13 +12,18 @@ public class Event implements ModelType {
 	private String name;
 	private long distance;
 
+	/** Distance to previous Event of same TagType. */
+	private long diffDistance;
+	/** Timestamp to previous Event of same TagType. */
+	private long diffTimestamp;
+
 	/**
 	 @param id
 	 UUID for the event
 	 @param name
 	 String
 	 @param distance
-	 Distance in millimeter
+	 Distance in Meter
 	 @param bikeId
 	 UUID for the foreign key bikeID
 	 @param tagId
@@ -28,16 +33,35 @@ public class Event implements ModelType {
 	 @param timestamp
 	 Long with the timestamp of the event
 	 */
-	public Event(UUID id, String name, long distance, UUID bikeId, UUID tagId, GeoLocation geoLocation, long timestamp) {
+	public Event(UUID id,
+	             String name,
+	             long distance,
+	             UUID bikeId,
+	             UUID tagId,
+	             GeoLocation geoLocation,
+	             long timestamp,
+	             long diffDistance,
+	             long diffTimestamp
+	) {
 
 		this.id = id;
+		this.distance = distance;
 		this.bikeId = bikeId;
 		this.tagId = tagId;
 		this.name = name;
 		this.timestamp = timestamp;
+		this.diffDistance = diffDistance;
+		this.diffTimestamp = diffTimestamp;
 		this.geoLocation = geoLocation != null ? geoLocation : new GeoLocation(0, 0, 0);
 	}
 
+	public long getDiffTimestamp() {
+		return diffTimestamp;
+	}
+
+	public long getDiffDistance() {
+		return diffDistance;
+	}
 
 	public long getDistance() {
 		return distance;

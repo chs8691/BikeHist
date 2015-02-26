@@ -1,202 +1,312 @@
 package de.egh.bikehist;
 
 import android.content.ContentResolver;
-import android.content.ContentValues;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import de.egh.bikehist.de.egh.bikehist.de.egh.bikehist.ui.DrawerController;
+import de.egh.bikehist.de.egh.bikehist.de.egh.bikehist.ui.EmptyContentFragment;
+import de.egh.bikehist.de.egh.bikehist.de.egh.bikehist.ui.EventListFragment;
 import de.egh.bikehist.de.egh.bikehist.model.Bike;
 import de.egh.bikehist.de.egh.bikehist.model.Event;
 import de.egh.bikehist.de.egh.bikehist.model.Tag;
 import de.egh.bikehist.de.egh.bikehist.model.TagType;
 import de.egh.bikehist.de.egh.bikehist.model.Utils;
 import de.egh.bikehist.de.egh.bikehist.persistance.BikeHistProvider;
-import de.egh.bikehist.de.egh.bikehist.persistance.BikeHistProvider.BikeHistContract.Tables.Event.Columns;
 
-import static de.egh.bikehist.de.egh.bikehist.persistance.BikeHistProvider.BikeHistContract.Tables.Event.Columns.*;
 
 public class MainActivity extends ActionBarActivity {
 
 	public static final String TAG = MainActivity.class.getSimpleName();
 	public static final String TAG_TYPE_POSITION = "Position";
 	public static final String TAG_TYPE_MAINTENANCE = "Maintenance";
-	public static final String BIKE_BROMPTON = "Brompton";
 	public static final String TAG_CHAIN = "Chain";
-	public static final String TAG_CHAIN_WHEEL = "Chain wheel";
 	public static final String TAG_START = "Start";
 	public static final String TAG_END = "End";
-	private String[] itemArray;
-	private ListView listView;
-	private ArrayList<Event> listItems;
-	private ListItemAdapter aa;
-	private List<Tag> tags;
-	private List<TagType> tagTypes;
-	private List<Bike> bikes;
-	private List<Event> events;
+	private DrawerLayout mDrawerLayout;
+	private ActionBarDrawerToggle mDrawerToggle;
+	private LinearLayout mDrawer;
+	/** Handles content of drawer an select event */
+	private DrawerController drawerController;
 
-	/** Helper for Dummy data */
-	private static TagType getTagTypeByName(String name, List<TagType> list) {
-		for (TagType entry : list) {
-			if (entry.getName().equals(name)) {
-				return entry;
-			}
-		}
-		return null;
-
-	}
-
-	/** Helper for Dummy data */
-	private static Tag getTagByName(String name, List<Tag> list) {
-		for (Tag entry : list) {
-			if (entry.getName().equals(name)) {
-				return entry;
-			}
-		}
-		return null;
-
-	}
-
-	/** Helper for Dummy data */
-	private static Bike getBikeByName(String name, List<Bike> list) {
-		for (Bike entry : list) {
-			if (entry.getName().equals(name)) {
-				return entry;
-			}
-		}
-		return null;
+	/** Can be null */
+//	private UUID actualTagTypeId;
+//	/** Can be null */
+//	private UUID actualBikeId;
+	@Override
+	protected void onStop() {
+		super.onStop();
+		drawerController.onStop();
 	}
 
 	/** Only for development. */
 	private void createDummyData() {
 
-		bikes = new ArrayList<>();
-		bikes.add(new Bike(UUID.randomUUID(),BIKE_BROMPTON, "448010"));
-		bikes.add(new Bike(UUID.randomUUID(), "DEV", "Device 0"));
-
-		tagTypes = new ArrayList<>();
-		tagTypes.add(new TagType(UUID.randomUUID(), TAG_TYPE_MAINTENANCE));
-		tagTypes.add(new TagType(UUID.randomUUID(), TAG_TYPE_POSITION));
-
-		tags = new ArrayList<>();
-		tags.add(new Tag(
-						UUID.randomUUID(), TAG_CHAIN, getTagTypeByName(TAG_TYPE_MAINTENANCE, tagTypes).getId())
-		);
-		tags.add(new Tag(
-						UUID.randomUUID(), TAG_CHAIN_WHEEL, getTagTypeByName(TAG_TYPE_MAINTENANCE, tagTypes).getId())
-		);
-		tags.add(new Tag(
-						UUID.randomUUID(), TAG_START, getTagTypeByName(TAG_TYPE_POSITION, tagTypes).getId())
-		);
-		tags.add(new Tag(
-						UUID.randomUUID(), TAG_END, getTagTypeByName(TAG_TYPE_POSITION, tagTypes).getId())
-		);
-
-		events = new ArrayList<>();
+		// Temp. list of bikes for this builder
+		List<Bike> lBikes = new ArrayList<>();
+		List<Tag> lTags = new ArrayList<>();
+		List<TagType> lTagTypes = new ArrayList<>();
 
 		ContentResolver cr = getContentResolver();
-//		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_EVENTS, null, null, null, null);
 
-		Event event = new Event(UUID.randomUUID(), "SRAM PC1", 100000, getBikeByName(BIKE_BROMPTON, bikes).getId(),
-				getTagByName(TAG_CHAIN, tags).getId(), null, System.currentTimeMillis());
+		//----Create/add Bikes once ----//
+		//Create Brompton
+		final String FRAME_NUMBER_MY_BROMPTON = "BROMPTON-448010";
+		String where = BikeHistProvider.BikeHistContract.Tables.Bike.Columns.Name.FRAME_NUMBER + " =?";
+		String[] args = {FRAME_NUMBER_MY_BROMPTON};
 
-		String where = Columns.Name.ID + " =?";
-		String[] args = {event.getId().toString()};
-
-		if (cr.query(BikeHistProvider.CONTENT_URI_EVENTS, null, where, args, null).getCount()==0) {
-			ContentValues values = Utils.buildContentValues(event);
-			cr.insert(BikeHistProvider.CONTENT_URI_EVENTS, values);
+		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_BIKES, null, where, args, null);
+		if (c.getCount() == 0) {
+			Bike brompton = new Bike(UUID.randomUUID(), "Brompton", FRAME_NUMBER_MY_BROMPTON);
+			lBikes.add(brompton);
+			cr.insert(BikeHistProvider.CONTENT_URI_BIKES, Utils.buildBikeContentValues(brompton));
+		} else {
+			c.moveToFirst();
+			lBikes.add(Utils.buildBikeFromCursor(c));
 		}
+		c.close();
 
+		//Create Brompton
+		final String FRAME_NUMBER_DEV = "DEV-1";
+		String devBikeWhere = BikeHistProvider.BikeHistContract.Tables.Bike.Columns.Name.FRAME_NUMBER + " =?";
+		String[] devBikeArgs = {FRAME_NUMBER_DEV};
+		c = cr.query(BikeHistProvider.CONTENT_URI_BIKES, null, devBikeWhere, devBikeArgs, null);
+		if (c.getCount() == 0) {
+			Bike devBike = new Bike(UUID.randomUUID(), "DEV Device", FRAME_NUMBER_DEV);
+			lBikes.add(devBike);
+			cr.insert(BikeHistProvider.CONTENT_URI_BIKES, Utils.buildBikeContentValues(devBike));
+		} else {
+			c.moveToFirst();
+			lBikes.add(Utils.buildBikeFromCursor(c));
+		}
+		c.close();
 
-//		events.add(new Event(UUID.randomUUID(), "SRAM PC1", 100000, getBikeByName(BIKE_BROMPTON, bikes).getId(),
-//				getTagByName(TAG_CHAIN, tags).getId(), null, System.currentTimeMillis()));
-//
-//		events.add(new Event(UUID.randomUUID(), "Truvati 52", 200000, getBikeByName(BIKE_BROMPTON, bikes).getId(),
-//				getTagByName(TAG_CHAIN_WHEEL, tags).getId(), null, System.currentTimeMillis()));
-//
-//		events.add(new Event(UUID.randomUUID(), TAG_START, 1000000, getBikeByName(BIKE_BROMPTON, bikes).getId(),
-//				getTagByName(TAG_START, tags).getId(), null, System.currentTimeMillis()));
-//
-//		events.add(new Event(UUID.randomUUID(), TAG_END, 1010000, getBikeByName(BIKE_BROMPTON, bikes).getId(),
-//				getTagByName(TAG_END, tags).getId(), null, System.currentTimeMillis()));
-//
-//		events.add(new Event(UUID.randomUUID(), TAG_START, 1020000, getBikeByName(BIKE_BROMPTON, bikes).getId(),
-//				getTagByName(TAG_START, tags).getId(), null, System.currentTimeMillis()));
-//
-//		events.add(new Event(UUID.randomUUID(), TAG_END, 1030000, getBikeByName(BIKE_BROMPTON, bikes).getId(),
-//				getTagByName(TAG_END, tags).getId(), null, System.currentTimeMillis()));
-//
-//
-//		events.add(new Event(UUID.randomUUID(), TAG_START, 1040000, getBikeByName(BIKE_BROMPTON, bikes).getId(),
-//				getTagByName(TAG_START, tags).getId(), null, System.currentTimeMillis()));
-//
-//		events.add(new Event(UUID.randomUUID(), TAG_END, 1050000, getBikeByName(BIKE_BROMPTON, bikes).getId(),
-//				getTagByName(TAG_END, tags).getId(), null, System.currentTimeMillis()));
-//
-//		events.add(new Event(UUID.randomUUID(), "KMC Gold", 100000, getBikeByName(BIKE_BROMPTON, bikes).getId(),
-//				getTagByName(TAG_CHAIN, tags).getId(), null, System.currentTimeMillis()));
+		//----Create/add TagTypes once ----//
+		String tagTypeWhere = BikeHistProvider.BikeHistContract.Tables.TagType.Columns.Name.NAME + " =?";
+		String[] tagTypeArgs = {TAG_TYPE_MAINTENANCE};
 
+		c = cr.query(BikeHistProvider.CONTENT_URI_TAG_TYPES, null, tagTypeWhere, tagTypeArgs, null);
+		if (c.getCount() == 0) {
+			TagType tagType = new TagType(UUID.randomUUID(), TAG_TYPE_MAINTENANCE);
+			lTagTypes.add(tagType);
+			cr.insert(BikeHistProvider.CONTENT_URI_TAG_TYPES, Utils.buildTagTypeContentValues(tagType));
+		} else {
+			c.moveToFirst();
+			lTagTypes.add(Utils.buildTagTypeFromCursor(c));
+		}
+		c.close();
 
+		tagTypeArgs[0] = TAG_TYPE_POSITION;
+		c = cr.query(BikeHistProvider.CONTENT_URI_TAG_TYPES, null, tagTypeWhere, tagTypeArgs, null);
+		if (c.getCount() == 0) {
+			TagType tagType = new TagType(UUID.randomUUID(), TAG_TYPE_POSITION);
+			lTagTypes.add(tagType);
+			cr.insert(BikeHistProvider.CONTENT_URI_TAG_TYPES, Utils.buildTagTypeContentValues(tagType));
+		} else {
+			c.moveToFirst();
+			lTagTypes.add(Utils.buildTagTypeFromCursor(c));
+		}
+		c.close();
+
+		//----Create/add Tags once ----//
+		String tagWhere = BikeHistProvider.BikeHistContract.Tables.Tag.Columns.Name.NAME + " =?";
+		String[] tagArgs = {"Chain"};
+
+		c = cr.query(BikeHistProvider.CONTENT_URI_TAGS, null, tagWhere, tagArgs, null);
+		if (c.getCount() == 0) {
+			Tag tag = new Tag(UUID.randomUUID(), tagArgs[0], Utils.getTagTypeByName(TAG_TYPE_MAINTENANCE, lTagTypes).getId());
+			lTags.add(tag);
+			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, Utils.buildTagContentValues(tag));
+		} else {
+			c.moveToFirst();
+			lTags.add(Utils.buildTagFromCursor(c));
+		}
+		c.close();
+
+		tagArgs[0] = "Tyre";
+
+		c = cr.query(BikeHistProvider.CONTENT_URI_TAGS, null, tagWhere, tagArgs, null);
+		if (c.getCount() == 0) {
+			Tag tag = new Tag(UUID.randomUUID(), tagArgs[0], Utils.getTagTypeByName(TAG_TYPE_MAINTENANCE, lTagTypes).getId());
+			lTags.add(tag);
+			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, Utils.buildTagContentValues(tag));
+		} else {
+			c.moveToFirst();
+			lTags.add(Utils.buildTagFromCursor(c));
+		}
+		c.close();
+
+		tagArgs[0] = TAG_START;
+
+		c = cr.query(BikeHistProvider.CONTENT_URI_TAGS, null, tagWhere, tagArgs, null);
+		if (c.getCount() == 0) {
+			Tag tag = new Tag(UUID.randomUUID(), tagArgs[0], Utils.getTagTypeByName(TAG_TYPE_POSITION, lTagTypes).getId());
+			lTags.add(tag);
+			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, Utils.buildTagContentValues(tag));
+		} else {
+			c.moveToFirst();
+			lTags.add(Utils.buildTagFromCursor(c));
+		}
+		c.close();
+
+		tagArgs[0] = TAG_END;
+
+		c = cr.query(BikeHistProvider.CONTENT_URI_TAGS, null, tagWhere, tagArgs, null);
+		if (c.getCount() == 0) {
+			Tag tag = new Tag(UUID.randomUUID(), tagArgs[0], Utils.getTagTypeByName(TAG_TYPE_POSITION, lTagTypes).getId());
+			lTags.add(tag);
+			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, Utils.buildTagContentValues(tag));
+		} else {
+			c.moveToFirst();
+			lTags.add(Utils.buildTagFromCursor(c));
+		}
+		c.close();
+
+		//----Add an Event ----//
+		UUID id = UUID.randomUUID();
+		Event event = new Event(id, "UUID=" + id.toString(), System.currentTimeMillis(),
+				Utils.getBikeByFrameNumber(FRAME_NUMBER_MY_BROMPTON, lBikes).getId(),
+				Utils.getTagByName(TAG_CHAIN, lTags).getId(), null, System.currentTimeMillis(),
+				0, 0 //Transient fields
+		);
+
+		cr.insert(BikeHistProvider.CONTENT_URI_EVENTS, Utils.buildEventContentValues(event));
+
+		id = UUID.randomUUID();
+		String trip = "test trip";
+		event = new Event(id, trip, System.currentTimeMillis() - 1000000,
+				Utils.getBikeByFrameNumber(FRAME_NUMBER_MY_BROMPTON, lBikes).getId(),
+				Utils.getTagByName(TAG_START, lTags).getId(), null, System.currentTimeMillis(),
+				0, 0 //Transient fields
+		);
+
+		cr.insert(BikeHistProvider.CONTENT_URI_EVENTS, Utils.buildEventContentValues(event));
+
+		event = new Event(id, trip, System.currentTimeMillis(),
+				Utils.getBikeByFrameNumber(FRAME_NUMBER_MY_BROMPTON, lBikes).getId(),
+				Utils.getTagByName(TAG_END, lTags).getId(), null, System.currentTimeMillis(),
+				0, 0 //Transient fields
+		);
+
+		cr.insert(BikeHistProvider.CONTENT_URI_EVENTS, Utils.buildEventContentValues(event));
 	}
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		Log.d(TAG, "onCreate()");
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-		listView = (ListView) findViewById(R.id.list);
 
-		listItems = new ArrayList<Event>();
-
-		int resID = R.layout.item;
-		aa = new ListItemAdapter(this, resID, listItems);
-		listView.setAdapter(aa);
-
+		//Remove for production
 		createDummyData();
-		loadDataFromProvider();
 
-		refreshUI();
+		setContentView(R.layout.drawer_layout);
 
+		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+		mDrawer = (LinearLayout) findViewById(R.id.drawer);
+
+		drawerController = new DrawerController(this, (ListView) findViewById(R.id.drawerBikeList),
+				(ListView) findViewById(R.id.drawerTagTypeList),
+				(ListView) findViewById(R.id.drawerTagList));
+
+		mDrawerToggle = new ActionBarDrawerToggle(
+				this,                  /* host Activity */
+				mDrawerLayout,         /* DrawerLayout object */
+				R.string.drawerOpen,  /* "open drawer_layout" description */
+				R.string.drawerClose  /* "close drawer_layout" description */
+		) {
+
+			/** Called when a drawer_layout has settled in a completely closed state. */
+			public void onDrawerClosed(View view) {
+				Log.d(TAG, "onDrawerClosed");
+				super.onDrawerClosed(view);
+				invalidateOptionsMenu();
+				showEventList();
+			}
+
+			/** Called when a drawer_layout has settled in a completely open state. */
+			public void onDrawerOpened(View drawerView) {
+				Log.d(TAG, "onDrawerOpened");
+				super.onDrawerOpened(drawerView);
+				getSupportActionBar().setTitle(R.string.app_name);
+				invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+			}
+		};
+
+		// Set the drawer_layout toggle as the DrawerListener
+		mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+		getSupportActionBar().setHomeButtonEnabled(true);
+
+		showEventList();
 
 	}
 
-	private void loadDataFromProvider() {
-		// Clear the existing earthquake array
-		events.clear();
 
-		ContentResolver cr = getContentResolver();
+	private void showEventList() {
 
-		// Return all the saved earthquakes
-		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_EVENTS, null, null, null, null);
-
-		if (c.moveToFirst()) {
-			do {
-				Event event = Utils.buildEventFromCursor(c);
-				events.add(event);
-//				addQuakeToArray(q);
-			} while (c.moveToNext());
+		//Both, bike and Type must be selected
+		if (drawerController.getActualBike() == null || drawerController.getActualTagType() == null) {
+			getSupportActionBar().setTitle(R.string.app_name);
+			getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new EmptyContentFragment()).commit();
+			return;
 		}
+
+		//Standard case: bike and Type exist and are selected
+		getSupportActionBar().setTitle(drawerController.getActualBike().getName() + "/" + drawerController.getActualTagType().getName());
+
+		// Create a new fragment and specify the planet to show based on position
+		Fragment fragment = new EventListFragment();
+		Bundle args = new Bundle();
+		args.putString(EventListFragment.Args.TAG_TYPE_ID, drawerController.getActualTagType().getId().toString());
+		args.putString(EventListFragment.Args.BIKE_ID, drawerController.getActualBike().getId().toString());
+		fragment.setArguments(args);
+//
+//		// Insert the fragment by replacing any existing fragment
+		FragmentManager fragmentManager = getSupportFragmentManager();
+		fragmentManager.beginTransaction()
+				.replace(R.id.content_frame, fragment)
+				.commit();
 	}
 
-	private void refreshUI() {
+	/* Called whenever we call invalidateOptionsMenu() */
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		// If the nav drawer is open, hide action items related to the content view
+//		boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawer);
+//		menu.findItem(R.id.action_websearch).setVisible(!drawerOpen);
+		return super.onPrepareOptionsMenu(menu);
+	}
 
-		listItems.clear();
-		for (Event event : events) {
-			listItems.add(event);
-		}
+	@Override
+	protected void onPostCreate(Bundle savedInstanceState) {
+		super.onPostCreate(savedInstanceState);
+		// Sync the toggle state after onRestoreInstanceState has occurred.
+		mDrawerToggle.syncState();
+	}
 
-		aa.notifyDataSetChanged();
 
-
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		mDrawerToggle.onConfigurationChanged(newConfig);
 	}
 
 	@Override
@@ -213,6 +323,12 @@ public class MainActivity extends ActionBarActivity {
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
 
+		// Pass the event to ActionBarDrawerToggle, if it returns
+		// true, then it has handled the app icon touch event
+		if (mDrawerToggle.onOptionsItemSelected(item)) {
+			return true;
+		}
+
 		//noinspection SimplifiableIfStatement
 		if (id == R.id.action_settings) {
 			return true;
@@ -220,5 +336,6 @@ public class MainActivity extends ActionBarActivity {
 
 		return super.onOptionsItemSelected(item);
 	}
+
 
 }
