@@ -1,6 +1,7 @@
 package de.egh.bikehist;
 
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -13,22 +14,23 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import de.egh.bikehist.de.egh.bikehist.de.egh.bikehist.ui.DrawerController;
-import de.egh.bikehist.de.egh.bikehist.de.egh.bikehist.ui.EmptyContentFragment;
-import de.egh.bikehist.de.egh.bikehist.de.egh.bikehist.ui.EventListFragment;
-import de.egh.bikehist.de.egh.bikehist.model.Bike;
-import de.egh.bikehist.de.egh.bikehist.model.Event;
-import de.egh.bikehist.de.egh.bikehist.model.Tag;
-import de.egh.bikehist.de.egh.bikehist.model.TagType;
-import de.egh.bikehist.de.egh.bikehist.model.Utils;
-import de.egh.bikehist.de.egh.bikehist.persistance.BikeHistProvider;
+import de.egh.bikehist.masterdata.MasterDataListActivity;
+import de.egh.bikehist.masterdata.MasterDataContract;
+import de.egh.bikehist.model.Bike;
+import de.egh.bikehist.model.Event;
+import de.egh.bikehist.model.Tag;
+import de.egh.bikehist.model.TagType;
+import de.egh.bikehist.model.Utils;
+import de.egh.bikehist.persistance.BikeHistProvider;
+import de.egh.bikehist.ui.EmptyContentFragment;
+import de.egh.bikehist.ui.EventListFragment;
+import de.egh.bikehist.ui.drawer.DrawerController;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -39,16 +41,11 @@ public class MainActivity extends ActionBarActivity {
 	public static final String TAG_CHAIN = "Chain";
 	public static final String TAG_START = "Start";
 	public static final String TAG_END = "End";
-	private DrawerLayout mDrawerLayout;
 	private ActionBarDrawerToggle mDrawerToggle;
-	private LinearLayout mDrawer;
+
 	/** Handles content of drawer an select event */
 	private DrawerController drawerController;
 
-	/** Can be null */
-//	private UUID actualTagTypeId;
-//	/** Can be null */
-//	private UUID actualBikeId;
 	@Override
 	protected void onStop() {
 		super.onStop();
@@ -82,7 +79,7 @@ public class MainActivity extends ActionBarActivity {
 		}
 		c.close();
 
-		//Create Brompton
+		//Create
 		final String FRAME_NUMBER_DEV = "DEV-1";
 		String devBikeWhere = BikeHistProvider.BikeHistContract.Tables.Bike.Columns.Name.FRAME_NUMBER + " =?";
 		String[] devBikeArgs = {FRAME_NUMBER_DEV};
@@ -218,8 +215,7 @@ public class MainActivity extends ActionBarActivity {
 
 		setContentView(R.layout.drawer_layout);
 
-		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-		mDrawer = (LinearLayout) findViewById(R.id.drawer);
+		DrawerLayout mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 
 		drawerController = new DrawerController(this, (ListView) findViewById(R.id.drawerBikeList),
 				(ListView) findViewById(R.id.drawerTagTypeList),
@@ -255,28 +251,41 @@ public class MainActivity extends ActionBarActivity {
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		getSupportActionBar().setHomeButtonEnabled(true);
 
-		showEventList();
-
 	}
 
+	@Override
+	protected void onResume() {
+		super.onResume();
+		drawerController.reloadDate();
+		showEventList();
+
+
+	}
 
 	private void showEventList() {
 
 		//Both, bike and Type must be selected
-		if (drawerController.getActualBike() == null || drawerController.getActualTagType() == null) {
+		if (drawerController.getSelectedBike() == null || drawerController.getSelectedTagType() == null) {
 			getSupportActionBar().setTitle(R.string.app_name);
 			getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new EmptyContentFragment()).commit();
 			return;
 		}
 
 		//Standard case: bike and Type exist and are selected
-		getSupportActionBar().setTitle(drawerController.getActualBike().getName() + "/" + drawerController.getActualTagType().getName());
+		getSupportActionBar().setTitle(drawerController.getSelectedBike().getName() + "/" + drawerController.getSelectedTagType().getName());
 
-		// Create a new fragment and specify the planet to show based on position
+		//Strings with Tag-IDs
+		ArrayList<String> tagIds = new ArrayList<>();
+		for (Tag tag : drawerController.getSelectedTags()) {
+			tagIds.add(tag.getId().toString());
+		}
+
+		// Create a new fragment
 		Fragment fragment = new EventListFragment();
 		Bundle args = new Bundle();
-		args.putString(EventListFragment.Args.TAG_TYPE_ID, drawerController.getActualTagType().getId().toString());
-		args.putString(EventListFragment.Args.BIKE_ID, drawerController.getActualBike().getId().toString());
+		args.putString(EventListFragment.Args.BIKE_ID, drawerController.getSelectedBike().getId().toString());
+		args.putString(EventListFragment.Args.TAG_TYPE_ID, drawerController.getSelectedTagType().getId().toString());
+		args.putStringArrayList(EventListFragment.Args.TAG_IDS, tagIds);
 		fragment.setArguments(args);
 //
 //		// Insert the fragment by replacing any existing fragment
@@ -329,12 +338,42 @@ public class MainActivity extends ActionBarActivity {
 			return true;
 		}
 
-		//noinspection SimplifiableIfStatement
-		if (id == R.id.action_settings) {
-			return true;
+		switch (id) {
+			case R.id.action_settings:
+				return true;
+			case R.id.actionBikes:
+				callBikes();
+				return true;
+			case R.id.actionTags:
+				callTags();
+				return true;
+			case R.id.actionTagTypes:
+				callTagTypes();
+				return true;
 		}
 
 		return super.onOptionsItemSelected(item);
+	}
+
+	/** Calls the master data activity for Bikes */
+	private void callBikes() {
+		Intent intent = new Intent(this, MasterDataListActivity.class);
+		intent.putExtra(MasterDataContract.Type.NAME, MasterDataContract.Type.Values.BIKE);
+		startActivity(intent);
+	}
+
+	/** Calls the master data activity for Tag Types */
+	private void callTagTypes() {
+		Intent intent = new Intent(this, MasterDataListActivity.class);
+		intent.putExtra(MasterDataContract.Type.NAME, MasterDataContract.Type.Values.TAG_TYPE);
+		startActivity(intent);
+	}
+
+	/** Calls the master data activity for Tags */
+	private void callTags() {
+		Intent intent = new Intent(this, MasterDataListActivity.class);
+		intent.putExtra(MasterDataContract.Type.NAME, MasterDataContract.Type.Values.TAG);
+		startActivity(intent);
 	}
 
 

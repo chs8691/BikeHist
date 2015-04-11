@@ -8,5 +8,24 @@
     <string name="drawerClose">Close</string>
     <string name="DistanceUnit">KM</string>
     <string name="empty">leer</string>
-
+    <string name="actionBikes">Bikes</string>
+    <string name="title_item_list">Items</string>
+    <string name="title_item_detail">Item Detail</string>
+    <string name="dialogBikeDeleteQuestion">Delete bike and all its events?</string>
+    <string name="dialogTagTypeDeleteQuestion">Delete tag type?</string>
+    <string name="dialogTagDeleteQuestion">Delete tag?</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="messageDeleteBikeSuccess">Deleted %1$d bike with %2$d event(s).</string>
+    <string name="messageDeleteTagTypesSuccess">Deleted %1$d tag type.</string>
+    <string name="messageDeleteTagsSuccess">Deleted %1$d tags and changed %2$d events.</string>
+    <string name="messageDeleteError">Deleting failed !</string>
+    <string name="titleEditTag">Edit Tag</string>
+    <string name="titleEditTagType">Edit Tag Type</string>
+    <string name="titleEditBike">Edit Bike</string>
+    <string name="titleCreateTag">Create Tag</string>
+    <string name="titleCreateTagType">Create Tag Type</string>
+    <string name="titleCreateBike">Create Bike</string>
+    <string name="actionTags">Tags</string>
+    <string name="actionTagTypes">Tag Types</string>
 </resources>
