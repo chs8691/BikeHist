@@ -25,40 +25,47 @@ class BikeHistDatabaseHelper extends SQLiteOpenHelper {
 	private static final String CREATE_EVENTS =
 			"create table " + BikeHistProvider.BikeHistContract.Tables.Event.NAME + " ("
 					+ BikeHistProvider.BikeHistContract.Tables._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-					+ BikeHistProvider.BikeHistContract.Tables.Event.Columns.Name.ID + " TEXT, "
-					+ BikeHistProvider.BikeHistContract.Tables.Event.Columns.Name.NAME + " TEXT, "
-					+ BikeHistProvider.BikeHistContract.Tables.Event.Columns.Name.DISTANCE + " INTEGER, "
-					+ BikeHistProvider.BikeHistContract.Tables.Event.Columns.Name.BIKE_ID + " TEXT, "
-					+ BikeHistProvider.BikeHistContract.Tables.Event.Columns.Name.TAG_ID + " TEXT, "
-					+ BikeHistProvider.BikeHistContract.Tables.Event.Columns.Name.GEO_LONGITUDE + " REAL, "
-					+ BikeHistProvider.BikeHistContract.Tables.Event.Columns.Name.GEO_LATITUDE + " REAL, "
-					+ BikeHistProvider.BikeHistContract.Tables.Event.Columns.Name.GEO_ALTITUDE + " REAL, "
-					+ BikeHistProvider.BikeHistContract.Tables.Event.Columns.Name.TIMESTAMP + " INTEGER); ";
+					+ BikeHistProvider.BikeHistContract.Tables.Event.Id.NAME + " TEXT, "
+					+ BikeHistProvider.BikeHistContract.Tables.Event.Name.NAME + " TEXT, "
+					+ BikeHistProvider.BikeHistContract.Tables.Event.Deleted.NAME + " INTEGER, "
+					+ BikeHistProvider.BikeHistContract.Tables.Event.TouchedAt.NAME + " INTEGER, "
+					+ BikeHistProvider.BikeHistContract.Tables.Event.Distance.NAME + " INTEGER, "
+					+ BikeHistProvider.BikeHistContract.Tables.Event.BikeId.NAME + " TEXT, "
+					+ BikeHistProvider.BikeHistContract.Tables.Event.TagId.NAME + " TEXT, "
+					+ BikeHistProvider.BikeHistContract.Tables.Event.GeoLongitude.NAME + " REAL, "
+					+ BikeHistProvider.BikeHistContract.Tables.Event.GeoLatitude.NAME + " REAL, "
+					+ BikeHistProvider.BikeHistContract.Tables.Event.GeoAltitude.NAME + " REAL, "
+					+ BikeHistProvider.BikeHistContract.Tables.Event.Timestamp.NAME + " INTEGER); ";
 
 	private static final String CREATE_BIKES =
 			"create table " + BikeHistProvider.BikeHistContract.Tables.Bike.NAME + " ("
 					+ BikeHistProvider.BikeHistContract.Tables._ID  + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-					+ BikeHistProvider.BikeHistContract.Tables.Bike.Columns.Name.ID + " TEXT, "
-					+ BikeHistProvider.BikeHistContract.Tables.Bike.Columns.Name.NAME + " TEXT, "
-					+ BikeHistProvider.BikeHistContract.Tables.Bike.Columns.Name.FRAME_NUMBER + " TEXT); ";
+					+ BikeHistProvider.BikeHistContract.Tables.Bike.Id.NAME + " TEXT, "
+					+ BikeHistProvider.BikeHistContract.Tables.Bike.Name.NAME + " TEXT, "
+					+ BikeHistProvider.BikeHistContract.Tables.Bike.Deleted.NAME + " INTEGER, "
+					+ BikeHistProvider.BikeHistContract.Tables.Bike.TouchedAt.NAME + " INTEGER, "
+					+ BikeHistProvider.BikeHistContract.Tables.Bike.FrameNumber.NAME + " TEXT); ";
 
 	private static final String CREATE_TAGS =
 			"create table " + BikeHistProvider.BikeHistContract.Tables.Tag.NAME + " ("
 					+ BikeHistProvider.BikeHistContract.Tables._ID  + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-					+ BikeHistProvider.BikeHistContract.Tables.Tag.Columns.Name.ID + " TEXT, "
-					+ BikeHistProvider.BikeHistContract.Tables.Tag.Columns.Name.NAME + " TEXT, "
-					+ BikeHistProvider.BikeHistContract.Tables.Tag.Columns.Name.TAG_TYPE_ID + " TEXT); ";
+					+ BikeHistProvider.BikeHistContract.Tables.Tag.Id.NAME + " TEXT, "
+					+ BikeHistProvider.BikeHistContract.Tables.Tag.Name.NAME + " TEXT, "
+					+ BikeHistProvider.BikeHistContract.Tables.Bike.Deleted.NAME + " INTEGER, "
+					+ BikeHistProvider.BikeHistContract.Tables.Bike.TouchedAt.NAME + " INTEGER, "
+					+ BikeHistProvider.BikeHistContract.Tables.Tag.TagTypeId.NAME + " TEXT); ";
 
 	private static final String CREATE_TAG_TYPES =
 			"create table " + BikeHistProvider.BikeHistContract.Tables.TagType.NAME + " ("
 					+ BikeHistProvider.BikeHistContract.Tables._ID  + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-					+ BikeHistProvider.BikeHistContract.Tables.TagType.Columns.Name.ID + " TEXT, "
-					+ BikeHistProvider.BikeHistContract.Tables.TagType.Columns.Name.NAME + " TEXT); ";
+					+ BikeHistProvider.BikeHistContract.Tables.TagType.Id.NAME + " TEXT, "
+					+ BikeHistProvider.BikeHistContract.Tables.TagType.Name.NAME + " TEXT, "
+					+ BikeHistProvider.BikeHistContract.Tables.Bike.Deleted.NAME + " INTEGER, "
+					+ BikeHistProvider.BikeHistContract.Tables.Bike.TouchedAt.NAME + " INTEGER);  ";
 
 
-	public BikeHistDatabaseHelper(Context context, String name,
-	                              SQLiteDatabase.CursorFactory factory, int version) {
-		super(context, name, factory, version);
+	public BikeHistDatabaseHelper(Context context) {
+		super(context, BikeHistProvider.Constants.Database.NAME, null, BikeHistProvider.Constants.Database.VERSION);
 	}
 
 	@Override

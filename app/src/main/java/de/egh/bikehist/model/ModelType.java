@@ -3,9 +3,10 @@ package de.egh.bikehist.model;
 import java.util.UUID;
 
 /**
- * Created by ChristianSchulzendor on 31.01.2015.
+ Has every Entity.
  */
-public interface ModelType {
+interface ModelType {
 	UUID getId();
+
 	String getName();
 }

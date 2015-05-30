@@ -13,7 +13,7 @@ import android.net.Uri;
 import android.text.TextUtils;
 
 /**
- Created by ChristianSchulzendor on 01.02.2015.
+ * Created by ChristianSchulzendor on 01.02.2015.
  */
 public class BikeHistProvider extends ContentProvider {
 
@@ -55,23 +55,20 @@ public class BikeHistProvider extends ContentProvider {
 	@Override
 	public boolean onCreate() {
 
-		BikeHistDatabaseHelper dbHelper = new BikeHistDatabaseHelper(getContext(),
-				Constants.Database.NAME,
-				null,
-				Constants.Database.VERSION);
+		BikeHistDatabaseHelper dbHelper = new BikeHistDatabaseHelper(getContext()
+		);
 		bikeHistDB = dbHelper.getWritableDatabase();
 
 //		if (dbHelper.isDropped()) {
 //			createDummyData();
 //		}
 
-		return (bikeHistDB == null) ? false : true;
+		return (bikeHistDB != null);
 	}
 
 
 	/**
-	 @throws java.lang.IllegalArgumentException
-	 Wrong URI
+	 * @throws java.lang.IllegalArgumentException Wrong URI
 	 */
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
@@ -98,22 +95,22 @@ public class BikeHistProvider extends ContentProvider {
 			case Constants.Uri.Event.MULTI:
 				return "vnd.android.cursor.dir/vnd.de.egh.provider.event";
 			case Constants.Uri.Event.ID:
-				return "vnd.android.cursor.item/vnd.de.egh.provider.event";
+				return "vnd.android.cursor.event_item/vnd.de.egh.provider.event";
 
 			case Constants.Uri.Bike.MULTI:
 				return "vnd.android.cursor.dir/vnd.de.egh.provider.bike";
 			case Constants.Uri.Bike.ID:
-				return "vnd.android.cursor.item/vnd.de.egh.provider.bike";
+				return "vnd.android.cursor.event_item/vnd.de.egh.provider.bike";
 
 			case Constants.Uri.Tag.MULTI:
 				return "vnd.android.cursor.dir/vnd.de.egh.provider.tag";
 			case Constants.Uri.Tag.ID:
-				return "vnd.android.cursor.item/vnd.de.egh.provider.tag";
+				return "vnd.android.cursor.event_item/vnd.de.egh.provider.tag";
 
 			case Constants.Uri.TagType.MULTI:
 				return "vnd.android.cursor.dir/vnd.de.egh.provider.tagType";
 			case Constants.Uri.TagType.ID:
-				return "vnd.android.cursor.item/vnd.de.egh.provider.tagType";
+				return "vnd.android.cursor.event_item/vnd.de.egh.provider.tagType";
 
 			default:
 				throw new IllegalArgumentException("Unsupported URI: " + uri);
@@ -131,10 +128,8 @@ public class BikeHistProvider extends ContentProvider {
 	}
 
 	/**
-	 @throws java.lang.IllegalArgumentException
-	 Wrong URI
-	 @throws android.database.SQLException
-	 Insert failed
+	 * @throws java.lang.IllegalArgumentException Wrong URI
+	 * @throws android.database.SQLException      Insert failed
 	 */
 	@Override
 	public Uri insert(Uri _uri, ContentValues _initialValues) {
@@ -148,15 +143,17 @@ public class BikeHistProvider extends ContentProvider {
 	}
 
 
-	/** Access to a specific table. */
+	/**
+	 * Access to a specific table.
+	 */
 	private abstract static class TableStrategy {
 
+		final String tableName;
+		final SQLiteDatabase db;
 		Uri uri;
-		String tableName;
-		SQLiteDatabase db;
 
 		/**
-		 Internal use only. Use factory method instead.
+		 * Internal use only. Use factory method instead.
 		 */
 		private TableStrategy(SQLiteDatabase db, Uri uri, String tableName) {
 			this.uri = uri;
@@ -165,11 +162,10 @@ public class BikeHistProvider extends ContentProvider {
 		}
 
 		/**
-		 Database access for a particular table.
-
-		 @return TableStrategy
-		 @throws IllegalArgumentException
-		 Uri could not resolved for a table
+		 * Database access for a particular table.
+		 *
+		 * @return TableStrategy
+		 * @throws IllegalArgumentException Uri could not resolved for a table
 		 */
 		static TableStrategy create(SQLiteDatabase db, Uri uri) {
 			if (uri.toString().contains(BikeHistContract.URI_PATH + "/" + BikeHistContract.Tables.Event.NAME)) {
@@ -202,8 +198,7 @@ public class BikeHistProvider extends ContentProvider {
 		}
 
 		/**
-		 @throws android.database.SQLException
-		 Insert failed
+		 * @throws android.database.SQLException Insert failed
 		 */
 		Uri insert(ContentValues _initialValues) {
 			// Insert the new row, will return the row number if
@@ -212,13 +207,14 @@ public class BikeHistProvider extends ContentProvider {
 
 			// Return a URI to the newly inserted row on success.
 			if (rowID > 0) {
-				Uri uri = ContentUris.withAppendedId(CONTENT_URI_EVENTS, rowID);
-				return uri;
+				return uri = ContentUris.withAppendedId(CONTENT_URI_EVENTS, rowID);
 			}
 			throw new SQLException("Insert failed into " + uri + " for " + _initialValues.toString());
 		}
 
-		/**Has to support count(*) AS count.*/
+		/**
+		 * Has to support count(*) AS count.
+		 */
 		abstract Cursor query(String[] projection, String selection, String[] selectionArgs, String sortOrder);
 	}
 
@@ -239,7 +235,7 @@ public class BikeHistProvider extends ContentProvider {
 
 			// If no sort order is specified sort by date / time
 			if (TextUtils.isEmpty(sortOrder)) {
-				orderBy = BikeHistContract.Tables.Bike.Columns.Name.NAME;
+				orderBy = BikeHistContract.Tables.BikeHistEntity.Name.NAME;
 			} else {
 				orderBy = sortOrder;
 			}
@@ -248,7 +244,7 @@ public class BikeHistProvider extends ContentProvider {
 			// If this is a row query, limit the result set to the passed in row.
 			switch (uriMatcher.match(uri)) {
 				case Constants.Uri.Bike.ID:
-					qb.appendWhere(BikeHistContract.Tables.Bike.Columns.Name.ID + "=?");
+					qb.appendWhere(BikeHistContract.Tables.BikeHistEntity.Id.NAME + "=?");
 					selectionArgs[selectionArgs.length] = uri.getPathSegments().get(1);
 					break;
 				default:
@@ -283,7 +279,7 @@ public class BikeHistProvider extends ContentProvider {
 
 			// If no sort order is specified sort by date / time
 			if (TextUtils.isEmpty(sortOrder)) {
-				orderBy = BikeHistContract.Tables.Tag.Columns.Name.NAME;
+				orderBy = BikeHistContract.Tables.Tag.Name.NAME;
 			} else {
 				orderBy = sortOrder;
 			}
@@ -292,7 +288,7 @@ public class BikeHistProvider extends ContentProvider {
 			// If this is a row query, limit the result set to the passed in row.
 			switch (uriMatcher.match(uri)) {
 				case Constants.Uri.Tag.ID:
-					qb.appendWhere(BikeHistContract.Tables.Tag.Columns.Name.ID + "=?");
+					qb.appendWhere(BikeHistContract.Tables.Tag.Id.NAME + "=?");
 					selectionArgs[selectionArgs.length] = uri.getPathSegments().get(1);
 					break;
 				default:
@@ -327,7 +323,7 @@ public class BikeHistProvider extends ContentProvider {
 
 			// If no sort order is specified sort by date / time
 			if (TextUtils.isEmpty(sortOrder)) {
-				orderBy = BikeHistContract.Tables.TagType.Columns.Name.NAME;
+				orderBy = BikeHistContract.Tables.BikeHistEntity.Name.NAME;
 			} else {
 				orderBy = sortOrder;
 			}
@@ -336,7 +332,7 @@ public class BikeHistProvider extends ContentProvider {
 			// If this is a row query, limit the result set to the passed in row.
 			switch (uriMatcher.match(uri)) {
 				case Constants.Uri.Tag.ID:
-					qb.appendWhere(BikeHistContract.Tables.TagType.Columns.Name.ID + "=?");
+					qb.appendWhere(BikeHistContract.Tables.BikeHistEntity.Id.NAME + "=?");
 					selectionArgs[selectionArgs.length] = uri.getPathSegments().get(1);
 					break;
 				default:
@@ -367,13 +363,11 @@ public class BikeHistProvider extends ContentProvider {
 			SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 			String orderBy;
 
-			//TODO check for wrong selections, e.g: selection transient fields
-
 			qb.setTables(tableName);
 
 			// If no sort order is specified sort by date / time
 			if (TextUtils.isEmpty(sortOrder)) {
-				orderBy = BikeHistContract.Tables.Event.Columns.Name.TIMESTAMP;
+				orderBy = BikeHistContract.Tables.Event.Timestamp.NAME;
 			} else {
 				orderBy = sortOrder;
 			}
@@ -381,7 +375,7 @@ public class BikeHistProvider extends ContentProvider {
 			// If this is a row query, limit the result set to the passed in row.
 			switch (uriMatcher.match(uri)) {
 				case Constants.Uri.Event.ID:
-					qb.appendWhere(BikeHistContract.Tables.Event.Columns.Name.ID + "=?");
+					qb.appendWhere(BikeHistContract.Tables.BikeHistEntity.Id.NAME + "=?");
 					selectionArgs[selectionArgs.length] = uri.getPathSegments().get(1);
 					break;
 				default:
@@ -413,17 +407,19 @@ public class BikeHistProvider extends ContentProvider {
 			c.moveToFirst();
 			MatrixCursor mc = new MatrixCursor(new String[]{
 					BikeHistProvider.BikeHistContract.Tables._ID,
-					BikeHistContract.Tables.Event.Columns.Name.ID,
-					BikeHistContract.Tables.Event.Columns.Name.NAME,
-					BikeHistContract.Tables.Event.Columns.Name.DISTANCE,
-					BikeHistContract.Tables.Event.Columns.Name.BIKE_ID,
-					BikeHistContract.Tables.Event.Columns.Name.TAG_ID,
-					BikeHistContract.Tables.Event.Columns.Name.GEO_LONGITUDE,
-					BikeHistContract.Tables.Event.Columns.Name.GEO_LATITUDE,
-					BikeHistContract.Tables.Event.Columns.Name.GEO_ALTITUDE,
-					BikeHistContract.Tables.Event.Columns.Name.TIMESTAMP,
-					BikeHistContract.Tables.Event.Columns.Name.DIFF_DISTANCE,
-					BikeHistContract.Tables.Event.Columns.Name.DIFF_TIMESTAMP});
+					BikeHistContract.Tables.Event.Id.NAME,
+					BikeHistContract.Tables.Event.Name.NAME,
+					BikeHistContract.Tables.Event.Deleted.NAME,
+					BikeHistContract.Tables.Event.TouchedAt.NAME,
+					BikeHistContract.Tables.Event.Distance.NAME,
+					BikeHistContract.Tables.Event.BikeId.NAME,
+					BikeHistContract.Tables.Event.TagId.NAME,
+					BikeHistContract.Tables.Event.GeoLongitude.NAME,
+					BikeHistContract.Tables.Event.GeoLatitude.NAME,
+					BikeHistContract.Tables.Event.GeoAltitude.NAME,
+					BikeHistContract.Tables.Event.Timestamp.NAME,
+					BikeHistContract.Tables.Event.DiffDistance.NAME,
+					BikeHistContract.Tables.Event.DiffTimestamp.NAME});
 
 			// For all entries: Map to new cursor and add transient fields
 			long distance;
@@ -433,30 +429,30 @@ public class BikeHistProvider extends ContentProvider {
 
 			if (c.getCount() > 0) {
 				do {
-					distance = c.getLong(BikeHistContract.Tables.Event.Columns.Number.DISTANCE);
-					timestamp = c.getLong(BikeHistContract.Tables.Event.Columns.Number.TIMESTAMP);
+					distance = c.getLong(BikeHistContract.Tables.Event.Distance.NUMBER);
+					timestamp = c.getLong(BikeHistContract.Tables.Event.Timestamp.NUMBER);
 
-					// Get corresponding Event: previous Event with same Tag
+					// Get corresponding Event: next Event with same Tag
 					Cursor c2 = db.rawQuery(
 							"SELECT * FROM ( SELECT " +
-									BikeHistContract.Tables.Event.Columns.Name.DISTANCE + ", " +
-									BikeHistContract.Tables.Event.Columns.Name.TIMESTAMP +
+									BikeHistContract.Tables.Event.Distance.NAME + ", " +
+									BikeHistContract.Tables.Event.Timestamp.NAME +
 									" FROM " + BikeHistContract.Tables.Event.NAME +
-									" WHERE " + BikeHistContract.Tables.Event.Columns.Name.BIKE_ID + "=?" +
-									" AND " + BikeHistContract.Tables.Event.Columns.Name.TAG_ID + "=?" +
-									" AND " + BikeHistContract.Tables.Event.Columns.Name.TIMESTAMP + "<?" +
-									" ORDER BY " + BikeHistContract.Tables.Event.Columns.Name.TIMESTAMP + " DESC)" +
+									" WHERE " + BikeHistContract.Tables.Event.BikeId.NAME + "=?" +
+									" AND " + BikeHistContract.Tables.Event.TagId.NAME + "=?" +
+									" AND " + BikeHistContract.Tables.Event.Timestamp.NAME + ">?" +
+									" ORDER BY " + BikeHistContract.Tables.Event.Timestamp.NAME + " ASC)" +
 									" LIMIT 1"
 							,
-							new String[]{c.getString(BikeHistContract.Tables.Event.Columns.Number.BIKE_ID),
-									c.getString(BikeHistContract.Tables.Event.Columns.Number.TAG_ID),
-									c.getString(BikeHistContract.Tables.Event.Columns.Number.TIMESTAMP)}
+							new String[]{c.getString(BikeHistContract.Tables.Event.BikeId.NUMBER),
+									c.getString(BikeHistContract.Tables.Event.TagId.NUMBER),
+									c.getString(BikeHistContract.Tables.Event.Timestamp.NUMBER)}
 					);
 
 					if (c2.getCount() == 1) {
 						c2.moveToFirst();
-						diffDistance = distance - c2.getLong(0);
-						diffTimestamp = timestamp - c2.getLong(1);
+						diffDistance = c2.getLong(0) - distance;
+						diffTimestamp = c2.getLong(1) - timestamp;
 					} else {
 						diffDistance = 0;
 						diffTimestamp = 0;
@@ -465,14 +461,16 @@ public class BikeHistProvider extends ContentProvider {
 					//Create new entries
 					Object[] values = {
 							c.getInt(0), //The key for the database entry
-							c.getString(BikeHistContract.Tables.Event.Columns.Number.ID),
-							c.getString(BikeHistContract.Tables.Event.Columns.Number.NAME),
+							c.getString(BikeHistContract.Tables.Event.Id.NUMBER),
+							c.getString(BikeHistContract.Tables.Event.Name.NUMBER),
+							c.getString(BikeHistContract.Tables.Event.Deleted.NUMBER),
+							c.getString(BikeHistContract.Tables.Event.TouchedAt.NUMBER),
 							distance,
-							c.getString(BikeHistContract.Tables.Event.Columns.Number.BIKE_ID),
-							c.getString(BikeHistContract.Tables.Event.Columns.Number.TAG_ID),
-							c.getString(BikeHistContract.Tables.Event.Columns.Number.GEO_LONGITUDE),
-							c.getString(BikeHistContract.Tables.Event.Columns.Number.GEO_LATITUDE),
-							c.getString(BikeHistContract.Tables.Event.Columns.Number.GEO_ALTITUDE),
+							c.getString(BikeHistContract.Tables.Event.BikeId.NUMBER),
+							c.getString(BikeHistContract.Tables.Event.TagId.NUMBER),
+							c.getString(BikeHistContract.Tables.Event.GeoLongitude.NUMBER),
+							c.getString(BikeHistContract.Tables.Event.GeoLatitude.NUMBER),
+							c.getString(BikeHistContract.Tables.Event.GeoAltitude.NUMBER),
 							timestamp,
 							diffDistance,
 							diffTimestamp
@@ -487,14 +485,16 @@ public class BikeHistProvider extends ContentProvider {
 		}
 	}
 
-	private static final class Constants {
+	static final class Constants {
 		static final class Database {
 			static final String NAME = "bikeHist.db";
-			static final int VERSION = 12;
+			static final int VERSION = 19;
 
 		}
 
-		/** Accessing data for all data and for single access */
+		/**
+		 * Accessing data for all data and for single access
+		 */
 		private static final class Uri {
 
 			static final class Event {
@@ -522,154 +522,300 @@ public class BikeHistProvider extends ContentProvider {
 	}
 
 	/**
-	 Contract for the consumer of the ContentProvider. The constants defined, only shows the
-	 outer view to the persistance layer. It does not define the table definition of the
-	 underlaying database. So, this Contract may not be used for defining the database.
+	 * Contract for the consumer of the ContentProvider. The constants defined, only shows the
+	 * outer view to the persistance layer. It does not define the table definition of the
+	 * underlaying database. So, this Contract may not be used for defining the database.
 	 */
 	public static final class BikeHistContract {
-		/** URI path for the ContentProvider. */
+		/**
+		 * Use this as Projection in the query() for a count(*).
+		 */
+		public static final String[] QUERY_COUNT_PROJECTION = {"count(*) AS count"};
+		/**
+		 * URI path for the ContentProvider.
+		 */
 		static final String URI_PATH = "de.egh.provider.bikehist";
 
-		/**Use this as Projection in the query() for a count(*). */
-		public static final String[] QUERY_COUNT_PROJECTION = {"count(*) AS count"};
-
-		/** For all tables: ID is the UUID, not database table id (_ID) */
+		/**
+		 * For all tables: EVENT_ID is the UUID, not database table id (_ID)
+		 */
 		public final class Tables {
 
 			/**
-			 Field name for the key field in the database tables. Never use this for
-			 domain classes.
+			 * Field name for the key field in the database tables. Never use this for
+			 * domain classes.
 			 */
 			public static final String _ID = "_id";
 
-			/**
-			 Tag has following fields:
-			 <ul>
-			 <li>String id - Unique ID (UUID as String)</li>
-			 <li>String name - Description</li>
-			 <li>String tagTypeId - Identifier (UUID) of the TagType </ul>
-			 */
-			public final class Tag {
+			/** Base fields for all Entities.*/
+			public abstract class BikeHistEntity {
+
+				/** UUID */
+				public final class Id {
+					public static final int NUMBER = 1;
+					public static final String NAME = "id";
+				}
+				/** Readable name */
+				public final class Name {
+					public static final int NUMBER = 2;
+					public static final String NAME = "name";
+				}
+
+				/** Boolean: true, if dataset is deleted, otherwise false */
+				public final class Deleted {
+					public static final int NUMBER = 3;
+					public static final String NAME = "deleted";
+				}
+
+
+				/** system time of last touch (modified data)*/
+				public final class TouchedAt {
+					public static final int NUMBER = 4;
+					public static final String NAME = "touchedAt";
+				}
+			}
+
+			/** Additional constants for table of Tags, base definition, see BikeHistEntity*/
+			public final class Tag extends BikeHistEntity{
+				/** Name of the table */
 				public static final String NAME = "tags";
 
-				public final class Columns {
-					public final class Number {
-						public static final int ID = 1;
-						public static final int NAME = 2;
-						public static final int TAG_TYPE_ID = 3;
-					}
-
-					public final class Name {
-						public static final String ID = "id";
-						public static final String NAME = "name";
-						public static final String TAG_TYPE_ID = "tagTypeId";
-					}
+				/** Foreign key: ID of TagType*/
+				public final class TagTypeId {
+					public static final int NUMBER = 5;
+					public static final String NAME = "tagTypeId";
 				}
 			}
 
-			/**
-			 TagType has following fields:
-			 <ul>
-			 <li>String id - Unique ID (UUID as String)</li>
-			 <li>String name - Description</li>
-			 */
-			public final class TagType {
+			/** Additional constants for table of TagTypes, base definition, see BikeHistEntity*/
+			public final class TagType extends BikeHistEntity {
+				/** Name of the table */
 				public static final String NAME = "tagTypes";
-
-				public final class Columns {
-					public final class Number {
-						public static final int ID = 1;
-						public static final int NAME = 2;
-					}
-
-					public final class Name {
-						public static final String ID = "id";
-						public static final String NAME = "name";
-					}
-				}
 			}
 
-
-			/**
-			 Bike has following fields:
-			 <ul>
-			 <li>String id - Unique ID (UUID as String)</li>
-			 <li>String name - Description</li>
-			 <li>String frameNumber - Identifier of the bike, e.g. 'Brompton 448010'</li> </ul>
-			 */
-			public final class Bike {
+			/** Additional constants for table of Bikes, base definition, see BikeHistEntity*/
+			public final class Bike extends BikeHistEntity {
+				/** Name of the table */
 				public static final String NAME = "bikes";
 
-				public final class Columns {
-					public final class Number {
-						public static final int ID = 1;
-						public static final int NAME = 2;
-						public static final int FRAME_NUMBER = 3;
-					}
-
-					public final class Name {
-						public static final String ID = "id";
-						public static final String NAME = "name";
-						public static final String FRAME_NUMBER = "frameNumber";
-					}
+				/** String with the frame number*/
+				public final class FrameNumber {
+					public static final int NUMBER = 5;
+					public static final String NAME = "frameNumber";
 				}
 			}
 
-			/**
-			 Event has following fields:
-			 <ul>
-			 <li>String id - Unique ID (UUID as String)</li>
-			 <li>String name - Events description</li>
-			 <li>long distance - Millimeter value</li>
-			 <li>String BikeId - Bikes unique ID (UUID as String)</li>
-			 <li>String TagId - Tags unique ID (UUID as String)</li>
-			 <li>Double longitude - Geoposition</li>
-			 <li>Double latitude - Geoposition</li>
-			 <li>Double altitude - Geoposition</li>
-			 <li>long timestamp - Create time in milliseconds</li>
-			 </ul>
-			 */
-			public final class Event {
-
-
+			/** Additional constants for table of Events, base definition, see BikeHistEntity*/
+			public final class Event extends BikeHistEntity {
+				/** Name of the table */
 				public static final String NAME = "events";
 
-				public final class Columns {
-					public final class Number {
-						public static final int ID = 1; // 0 is the database key field _ID
-						public static final int NAME = 2;
-						public static final int DISTANCE = 3;
-						public static final int BIKE_ID = 4;
-						public static final int TAG_ID = 5;
-						public static final int GEO_LONGITUDE = 6;
-						public static final int GEO_LATITUDE = 7;
-						public static final int GEO_ALTITUDE = 8;
-						public static final int TIMESTAMP = 9;
-						/** Transient field */
-						public static final int DIFF_DISTANCE = 10;
-						/** Transient field */
-						public static final int DIFF_TIMESTAMP = 11;
-					}
-
-					public final class Name {
-						public static final String ID = "id";
-						public static final String NAME = "name";
-						public static final String DISTANCE = "distance";
-						public static final String BIKE_ID = "bikeId";
-						public static final String TAG_ID = "tagId";
-						public static final String GEO_LONGITUDE = "GeoLongitude";
-						public static final String GEO_LATITUDE = "GeoLatitude";
-						public static final String GEO_ALTITUDE = "GeoAltitude";
-						public static final String TIMESTAMP = "timestamp";
-						/** Transient field */
-						public static final String DIFF_DISTANCE = "diffDistance";
-						/** Transient field */
-						public static final String DIFF_TIMESTAMP = "diffTimestamp";
-					}
+				/** Long with the distance in meters*/
+				public final class Distance {
+					public static final int NUMBER = 5;
+					public static final String NAME = "distance";
 				}
 
+				/** Foreign key: ID of Bike*/
+				public final class  BikeId{
+					public static final int NUMBER = 6;
+					public static final String NAME = "bikeId";
+				}
+				/** Foreign key: ID of Tag*/
+				public final class  TagId{
+					public static final int NUMBER = 7;
+					public static final String NAME = "tagId";
+				}
 
+				@Deprecated
+				public final class  GeoLongitude{
+					public static final int NUMBER = 8;
+					public static final String NAME = "geoLongitude";
+				}
+
+				@Deprecated
+				public final class  GeoLatitude{
+					public static final int NUMBER = 9;
+					public static final String NAME = "geoLatitude";
+				}
+
+				@Deprecated
+				public final class  GeoAltitude{
+					public static final int NUMBER = 10;
+					public static final String NAME = "geoAltitude";
+				}
+
+				/** Long with system time of the event*/
+				public final class  Timestamp{
+					public static final int NUMBER = 11;
+					public static final String NAME = "timestamp";
+				}
+
+				/** Transient field: Long the differnce of the distance*/
+				public final class  DiffDistance{
+					public static final int NUMBER = 12;
+					public static final String NAME = "diffDistance";
+				}
+
+				/** Transient field: Long the differnce of the timestamp*/
+				public final class  DiffTimestamp{
+					public static final int NUMBER = 13;
+					public static final String NAME = "diffTimestamp";
+				}
 			}
+
+//			/**
+//			 * Tag has following fields:
+//			 * <ul>
+//			 * <li>String id - Unique EVENT_ID (UUID as String)</li>
+//			 * <li>String name - Description</li>
+//			 * <li>String tagTypeId - Identifier (UUID) of the TagType </ul>
+//			 */
+//			public final class Tag {
+//				public static final String NAME = "tags";
+//
+//				public final class Columns {
+//					public final class Number {
+//						public static final int ID = 1;
+//						public static final int NAME = 2;
+//						public static final int TAG_TYPE_ID = 3;
+//						public static final int DELETED = 4;
+//						public static final int TOUCHED_AT = 5;
+//					}
+//
+//					public final class Name {
+//						public static final String ID = "id";
+//						public static final String NAME = "name";
+//						public static final String TAG_TYPE_ID = "tagTypeId";
+//						public static final String DELETED = "deleted";
+//						public static final String TOUCHED_AT = "touchedAt";
+//					}
+//				}
+//			}
+
+//			/**
+//			 * TagType has following fields:
+//			 * <ul>
+//			 * <li>String id - Unique EVENT_ID (UUID as String)</li>
+//			 * <li>String name - Description</li>
+//			 */
+//			public final class TagType {
+//				public static final String NAME = "tagTypes";
+//
+//				public final class Columns {
+//					public final class Number {
+//						public static final int ID = 1;
+//						public static final int NAME = 2;
+//						public static final int DELETED = 3;
+//						public static final int TOUCHED_AT = 4;
+//					}
+//
+//					public final class Name {
+//						public static final String ID = "id";
+//						public static final String NAME = "name";
+//						public static final String DELETED = "deleted";
+//						public static final String TOUCHED_AT = "touchedAt";
+//					}
+//				}
+//			}
+
+
+//			/**
+//			 * Bike has following fields:
+//			 * <ul>
+//			 * <li>String id - Unique EVENT_ID (UUID as String)</li>
+//			 * <li>String name - Description</li>
+//			 * <li>String frameNumber - Identifier of the bike, e.g. 'Brompton 448010'</li> </ul>
+//			 */
+//			public final class Bike {
+//				public static final String NAME = "bikes";
+//
+//				public final class Columns {
+//					public final class Number {
+//						public static final int ID = 1;
+//						public static final int NAME = 2;
+//						public static final int FRAME_NUMBER = 3;
+//						public static final int DELETED = 4;
+//						public static final int TOUCHED_AT = 5;
+//					}
+//
+//					public final class Name {
+//						public static final String ID = "id";
+//						public static final String NAME = "name";
+//						public static final String FRAME_NUMBER = "frameNumber";
+//						public static final String DELETED = "deleted";
+//						public static final String TOUCHED_AT = "touchedAt";
+//					}
+//				}
+//			}
+
+//			/**
+//			 * Event has following fields:
+//			 * <ul>
+//			 * <li>String id - Unique EVENT_ID (UUID as String)</li>
+//			 * <li>String name - Events description</li>
+//			 * <li>long distance - Millimeter value</li>
+//			 * <li>String BikeId - Bikes unique EVENT_ID (UUID as String)</li>
+//			 * <li>String TagId - Tags unique EVENT_ID (UUID as String)</li>
+//			 * <li>Double longitude - Geoposition</li>
+//			 * <li>Double latitude - Geoposition</li>
+//			 * <li>Double altitude - Geoposition</li>
+//			 * <li>long timestamp - Create time in milliseconds</li>
+//			 * </ul>
+//			 */
+//			public final class Event {
+//
+//
+//				public static final String NAME = "events";
+//
+//				public final class Columns {
+//					public final class Number {
+//						public static final int ID = 1; // 0 is the database key field _ID
+//						public static final int NAME = 2;
+//						public static final int DISTANCE = 3;
+//						public static final int BIKE_ID = 4;
+//						public static final int TAG_ID = 5;
+//						public static final int GEO_LONGITUDE = 6;
+//						public static final int GEO_LATITUDE = 7;
+//						public static final int GEO_ALTITUDE = 8;
+//						public static final int TIMESTAMP = 9;
+//						public static final int DELETED = 10;
+//						public static final int TOUCHED_AT = 11;
+//						/**
+//						 * Transient field
+//						 */
+//						public static final int DIFF_DISTANCE = 12;
+//						/**
+//						 * Transient field
+//						 */
+//						public static final int DIFF_TIMESTAMP = 13;
+//					}
+//
+//					public final class Name {
+//						public static final String ID = "id";
+//						public static final String NAME = "name";
+//						public static final String DISTANCE = "distance";
+//						public static final String BIKE_ID = "bikeId";
+//						public static final String TAG_ID = "tagId";
+//						public static final String GEO_LONGITUDE = "GeoLongitude";
+//						public static final String GEO_LATITUDE = "GeoLatitude";
+//						public static final String GEO_ALTITUDE = "GeoAltitude";
+//						public static final String TIMESTAMP = "timestamp";
+//						public static final String DELETED = "deleted";
+//						public static final String TOUCHED_AT = "touchedAt";
+//						/**
+//						 * Transient field
+//						 */
+//						public static final String DIFF_DISTANCE = "diffDistance";
+//						/**
+//						 * Transient field
+//						 */
+//						public static final String DIFF_TIMESTAMP = "diffTimestamp";
+//					}
+//				}
+//
+//
+//			}
 		}
 	}
 

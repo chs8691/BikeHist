@@ -2,12 +2,42 @@ package de.egh.bikehist.model;
 
 import java.util.UUID;
 
-/** Functional class: Type  of tags. */
+/**
+ * Functional class: Type  of tags.
+ */
 public class TagType implements ModelType {
-	private UUID id;
+	private final UUID id;
+	private String name;
+	private boolean deleted;
+	private long touchedAt;
 
-	public void setName(String name) {
+	public boolean isDeleted() {
+		return deleted;
+	}
+
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
+	}
+
+	public long getTouchedAt() {
+		return touchedAt;
+	}
+
+	public void setTouchedAt(long touchedAt) {
+		this.touchedAt = touchedAt;
+	}
+
+	/**
+	 * Avoid two different TagTypes with same name
+	 *
+	 * @param id   UUID of the dataset
+	 * @param name String with the name
+	 */
+	public TagType(UUID id, String name, boolean deleted, long touchedAt) {
+		this.id = id;
 		this.name = name;
+		this.deleted = deleted;
+		this.touchedAt = touchedAt;
 	}
 
 	@Override
@@ -20,15 +50,7 @@ public class TagType implements ModelType {
 		return name;
 	}
 
-	private String name;
-
-	/**
-	 Avoid two different TagTypes with same name
-	 @param id UUID of the dataset
-	 @param name String with the name
-	 */
-	public TagType(UUID id, String name) {
-		this.id = id;
+	public void setName(String name) {
 		this.name = name;
 	}
 

@@ -2,6 +2,7 @@ package de.egh.bikehist;
 
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -11,40 +12,61 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
-import de.egh.bikehist.masterdata.MasterDataListActivity;
-import de.egh.bikehist.masterdata.MasterDataContract;
 import de.egh.bikehist.model.Bike;
-import de.egh.bikehist.model.Event;
+import de.egh.bikehist.model.EntityLoader;
 import de.egh.bikehist.model.Tag;
 import de.egh.bikehist.model.TagType;
-import de.egh.bikehist.model.Utils;
+import de.egh.bikehist.model.Utils.EntityUtilsFactory;
 import de.egh.bikehist.persistance.BikeHistProvider;
-import de.egh.bikehist.ui.EmptyContentFragment;
-import de.egh.bikehist.ui.EventListFragment;
+import de.egh.bikehist.persistance.SaveDataService;
+import de.egh.bikehist.ui.ListCallbacks;
 import de.egh.bikehist.ui.drawer.DrawerController;
+import de.egh.bikehist.ui.event.EventContract;
+import de.egh.bikehist.ui.event.EventDetailActivity;
+import de.egh.bikehist.ui.event.EventDetailFragment;
+import de.egh.bikehist.ui.event.EventListFragment;
+import de.egh.bikehist.ui.masterdata.AdministratorActivity;
+
+/**
+ * TODO Differenz wird am falschen Objekt platziert
+ * TODO Gelöschte Einträge halten, Flag
+ * TODO Synchronisation
+ * TODO Refresh baut Fragment neu auf; Erestzung durch Selektion
+ */
+
+public class MainActivity extends ActionBarActivity implements ListCallbacks, EventDetailFragment.Callbacks {
 
 
-public class MainActivity extends ActionBarActivity {
-
-	public static final String TAG = MainActivity.class.getSimpleName();
-	public static final String TAG_TYPE_POSITION = "Position";
-	public static final String TAG_TYPE_MAINTENANCE = "Maintenance";
-	public static final String TAG_CHAIN = "Chain";
-	public static final String TAG_START = "Start";
-	public static final String TAG_END = "End";
+	public static final String EVENT_DETAIL_FRAGMENT_TAG = "eventDetailFragment";
+	public static final String EVENT_LIST_FRAGMENT_TAG = "EVENT_LIST_FRAGMENT_TAG";
+	private static final String TAG = MainActivity.class.getSimpleName();
+	private static final String PREF_KEY_INIT_APP = "PREF_KEY_INIT_APP";
+	/**
+	 * Is null, if widget.DrawerLayout is null
+	 */
 	private ActionBarDrawerToggle mDrawerToggle;
 
-	/** Handles content of drawer an select event */
+	/**
+	 * Handles content of drawer an select event
+	 */
 	private DrawerController drawerController;
+	/**
+	 * Whether or not the activity is in two-pane mode, i.e. running on a tablet
+	 * device.
+	 */
+	private boolean mTwoPane;
+	private boolean drawerOpen = false;
+	private DrawerLayout mDrawerLayout;
+
 
 	@Override
 	protected void onStop() {
@@ -52,156 +74,146 @@ public class MainActivity extends ActionBarActivity {
 		drawerController.onStop();
 	}
 
-	/** Only for development. */
+	/**
+	 * Callback method from {@link de.egh.bikehist.ui.ListCallbacks}
+	 * indicating that the event_item with the given EVENT_ID was selected.
+	 *
+	 * @param id Item id or null for new Event
+	 */
+	@Override
+	public void onItemSelected(UUID id, String type) {
+
+		if (mTwoPane) {
+			// In two-pane mode, show the detail view in this activity by
+			// adding or replacing the detail fragment using a
+			// fragment transaction.
+			EventDetailFragment fragment = new EventDetailFragment();
+
+			Bundle arguments = new Bundle();
+			if (id != null) {
+				arguments.putString(EventContract.EVENT_ID, id.toString());
+			} else {
+				arguments.putString(EventContract.BIKE_ID, drawerController.getSelectedBike().getId().toString());
+				arguments.putString(EventContract.TAG_TYPE_ID, drawerController.getSelectedTagType().getId().toString());
+			}
+			fragment.setArguments(arguments);
+			getSupportFragmentManager().beginTransaction()
+					.replace(R.id.mainDetailContainer, fragment, EVENT_DETAIL_FRAGMENT_TAG)
+					.commit();
+
+		} else {
+			// In single-pane mode, simply start the detail activity
+			// for the selected event_item EVENT_ID.
+			Intent detailIntent = new Intent(this, EventDetailActivity.class);
+			if (id != null) {
+				detailIntent.putExtra(EventContract.EVENT_ID, id.toString());
+			} else {
+				detailIntent.putExtra(EventContract.BIKE_ID, drawerController.getSelectedBike().getId().toString());
+				detailIntent.putExtra(EventContract.TAG_TYPE_ID, drawerController.getSelectedTagType().getId().toString());
+			}
+
+			startActivity(detailIntent);
+		}
+	}
+
+	/**
+	 * Initialize app's data once.
+	 */
 	private void createDummyData() {
 
-		// Temp. list of bikes for this builder
-		List<Bike> lBikes = new ArrayList<>();
-		List<Tag> lTags = new ArrayList<>();
-		List<TagType> lTagTypes = new ArrayList<>();
+		//Do this only once
+		if (getSharedPreferences(AppUtils.Prefs.PREF_NAME, 0).getBoolean(PREF_KEY_INIT_APP, false)) {
+			return;
+		}
+
 
 		ContentResolver cr = getContentResolver();
 
 		//----Create/add Bikes once ----//
-		//Create Brompton
-		final String FRAME_NUMBER_MY_BROMPTON = "BROMPTON-448010";
-		String where = BikeHistProvider.BikeHistContract.Tables.Bike.Columns.Name.FRAME_NUMBER + " =?";
-		String[] args = {FRAME_NUMBER_MY_BROMPTON};
+		//Create Bike
 
+		final String FRAME_NUMBER_BIKE_1 = "GERMANIA-448010";
+		String[] args = {FRAME_NUMBER_BIKE_1};
+		String where = BikeHistProvider.BikeHistContract.Tables.Bike.FrameNumber.NAME + " =?";
 		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_BIKES, null, where, args, null);
 		if (c.getCount() == 0) {
-			Bike brompton = new Bike(UUID.randomUUID(), "Brompton", FRAME_NUMBER_MY_BROMPTON);
-			lBikes.add(brompton);
-			cr.insert(BikeHistProvider.CONTENT_URI_BIKES, Utils.buildBikeContentValues(brompton));
-		} else {
-			c.moveToFirst();
-			lBikes.add(Utils.buildBikeFromCursor(c));
-		}
-		c.close();
-
-		//Create
-		final String FRAME_NUMBER_DEV = "DEV-1";
-		String devBikeWhere = BikeHistProvider.BikeHistContract.Tables.Bike.Columns.Name.FRAME_NUMBER + " =?";
-		String[] devBikeArgs = {FRAME_NUMBER_DEV};
-		c = cr.query(BikeHistProvider.CONTENT_URI_BIKES, null, devBikeWhere, devBikeArgs, null);
-		if (c.getCount() == 0) {
-			Bike devBike = new Bike(UUID.randomUUID(), "DEV Device", FRAME_NUMBER_DEV);
-			lBikes.add(devBike);
-			cr.insert(BikeHistProvider.CONTENT_URI_BIKES, Utils.buildBikeContentValues(devBike));
-		} else {
-			c.moveToFirst();
-			lBikes.add(Utils.buildBikeFromCursor(c));
+			Bike bike1 = new Bike(UUID.randomUUID(), getString(R.string.bikeNameBike1), FRAME_NUMBER_BIKE_1, false, System.currentTimeMillis());
+			cr.insert(BikeHistProvider.CONTENT_URI_BIKES, EntityUtilsFactory.createBikeUtils(this).build(bike1));
 		}
 		c.close();
 
 		//----Create/add TagTypes once ----//
-		String tagTypeWhere = BikeHistProvider.BikeHistContract.Tables.TagType.Columns.Name.NAME + " =?";
-		String[] tagTypeArgs = {TAG_TYPE_MAINTENANCE};
+		TagType tagTypeMaintenance = null;
+		TagType tagTypeTimeEvent = null;
 
-		c = cr.query(BikeHistProvider.CONTENT_URI_TAG_TYPES, null, tagTypeWhere, tagTypeArgs, null);
+		String tagTypeWhere = BikeHistProvider.BikeHistContract.Tables.TagType.Name.NAME + " =?";
+		String[] tagTypeArgsMaintenance = {getString(R.string.tagTypeNameMaintenance)};
+		c = cr.query(BikeHistProvider.CONTENT_URI_TAG_TYPES, null, tagTypeWhere, tagTypeArgsMaintenance, null);
 		if (c.getCount() == 0) {
-			TagType tagType = new TagType(UUID.randomUUID(), TAG_TYPE_MAINTENANCE);
-			lTagTypes.add(tagType);
-			cr.insert(BikeHistProvider.CONTENT_URI_TAG_TYPES, Utils.buildTagTypeContentValues(tagType));
-		} else {
-			c.moveToFirst();
-			lTagTypes.add(Utils.buildTagTypeFromCursor(c));
+			//--- Create both default TagTypes
+			tagTypeMaintenance = new TagType(UUID.randomUUID(), tagTypeArgsMaintenance[0], false, System.currentTimeMillis());
+			cr.insert(BikeHistProvider.CONTENT_URI_TAG_TYPES, EntityUtilsFactory.createTagTypeUtils(this).build(tagTypeMaintenance));
 		}
 		c.close();
 
-		tagTypeArgs[0] = TAG_TYPE_POSITION;
-		c = cr.query(BikeHistProvider.CONTENT_URI_TAG_TYPES, null, tagTypeWhere, tagTypeArgs, null);
+		String[] tagTypeArgsTimeEvents = {getString(R.string.tagTypeNameTimeEvent)};
+		c = cr.query(BikeHistProvider.CONTENT_URI_TAG_TYPES, null, tagTypeWhere, tagTypeArgsTimeEvents, null);
 		if (c.getCount() == 0) {
-			TagType tagType = new TagType(UUID.randomUUID(), TAG_TYPE_POSITION);
-			lTagTypes.add(tagType);
-			cr.insert(BikeHistProvider.CONTENT_URI_TAG_TYPES, Utils.buildTagTypeContentValues(tagType));
+			tagTypeTimeEvent = new TagType(UUID.randomUUID(), tagTypeArgsTimeEvents[0], false, System.currentTimeMillis());
+			cr.insert(BikeHistProvider.CONTENT_URI_TAG_TYPES, EntityUtilsFactory.createTagTypeUtils(this).build(tagTypeTimeEvent));
 		} else {
 			c.moveToFirst();
-			lTagTypes.add(Utils.buildTagTypeFromCursor(c));
 		}
 		c.close();
 
 		//----Create/add Tags once ----//
-		String tagWhere = BikeHistProvider.BikeHistContract.Tables.Tag.Columns.Name.NAME + " =?";
-		String[] tagArgs = {"Chain"};
+		if (tagTypeMaintenance != null) {
+			Tag tag = new Tag(UUID.randomUUID(), getString(R.string.tagNameChain), tagTypeMaintenance.getId(), false, System.currentTimeMillis());
+			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, EntityUtilsFactory.createTagUtils(this).build(tag));
 
-		c = cr.query(BikeHistProvider.CONTENT_URI_TAGS, null, tagWhere, tagArgs, null);
-		if (c.getCount() == 0) {
-			Tag tag = new Tag(UUID.randomUUID(), tagArgs[0], Utils.getTagTypeByName(TAG_TYPE_MAINTENANCE, lTagTypes).getId());
-			lTags.add(tag);
-			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, Utils.buildTagContentValues(tag));
-		} else {
-			c.moveToFirst();
-			lTags.add(Utils.buildTagFromCursor(c));
+			tag = new Tag(UUID.randomUUID(), getString(R.string.tagNameTyre), tagTypeMaintenance.getId(), false, System.currentTimeMillis());
+			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, EntityUtilsFactory.createTagUtils(this).build(tag));
 		}
-		c.close();
 
-		tagArgs[0] = "Tyre";
-
-		c = cr.query(BikeHistProvider.CONTENT_URI_TAGS, null, tagWhere, tagArgs, null);
-		if (c.getCount() == 0) {
-			Tag tag = new Tag(UUID.randomUUID(), tagArgs[0], Utils.getTagTypeByName(TAG_TYPE_MAINTENANCE, lTagTypes).getId());
-			lTags.add(tag);
-			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, Utils.buildTagContentValues(tag));
-		} else {
-			c.moveToFirst();
-			lTags.add(Utils.buildTagFromCursor(c));
+		if (tagTypeTimeEvent != null) {
+			Tag tag = new Tag(UUID.randomUUID(), getString(R.string.tagNameNewYear), tagTypeTimeEvent.getId(), false, System.currentTimeMillis());
+			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, EntityUtilsFactory.createTagUtils(this).build(tag));
 		}
-		c.close();
 
-		tagArgs[0] = TAG_START;
+//		//----Add an Event ----//
+//		UUID id = UUID.randomUUID();
+//		Event event = new Event(id, "UUID=" + id.toString(), System.currentTimeMillis(),
+//				Utils.getBikeByFrameNumber(FRAME_NUMBER_BIKE_1, lBikes).getId(),
+//				Utils.getTagByName(TAG_CHAIN, lTags).getId(), null, System.currentTimeMillis(),
+//				0, 0 //Transient fields
+//		);
+//
+//		cr.insert(BikeHistProvider.CONTENT_URI_EVENTS, Utils.buildEventContentValues(event));
+//
+//		id = UUID.randomUUID();
+//		String trip = "test trip";
+//		event = new Event(id, trip, System.currentTimeMillis() - 1000000,
+//				Utils.getBikeByFrameNumber(FRAME_NUMBER_BIKE_1, lBikes).getId(),
+//				Utils.getTagByName(TAG_START, lTags).getId(), null, System.currentTimeMillis(),
+//				0, 0 //Transient fields
+//		);
+//
+//		cr.insert(BikeHistProvider.CONTENT_URI_EVENTS, Utils.buildEventContentValues(event));
+//
+//		id = UUID.randomUUID();
+//		event = new Event(id, trip, System.currentTimeMillis(),
+//				Utils.getBikeByFrameNumber(FRAME_NUMBER_BIKE_1, lBikes).getId(),
+//				Utils.getTagByName(TAG_END, lTags).getId(), null, System.currentTimeMillis(),
+//				0, 0 //Transient fields
+//		);
+//
+//		cr.insert(BikeHistProvider.CONTENT_URI_EVENTS, Utils.buildEventContentValues(event));
 
-		c = cr.query(BikeHistProvider.CONTENT_URI_TAGS, null, tagWhere, tagArgs, null);
-		if (c.getCount() == 0) {
-			Tag tag = new Tag(UUID.randomUUID(), tagArgs[0], Utils.getTagTypeByName(TAG_TYPE_POSITION, lTagTypes).getId());
-			lTags.add(tag);
-			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, Utils.buildTagContentValues(tag));
-		} else {
-			c.moveToFirst();
-			lTags.add(Utils.buildTagFromCursor(c));
-		}
-		c.close();
 
-		tagArgs[0] = TAG_END;
-
-		c = cr.query(BikeHistProvider.CONTENT_URI_TAGS, null, tagWhere, tagArgs, null);
-		if (c.getCount() == 0) {
-			Tag tag = new Tag(UUID.randomUUID(), tagArgs[0], Utils.getTagTypeByName(TAG_TYPE_POSITION, lTagTypes).getId());
-			lTags.add(tag);
-			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, Utils.buildTagContentValues(tag));
-		} else {
-			c.moveToFirst();
-			lTags.add(Utils.buildTagFromCursor(c));
-		}
-		c.close();
-
-		//----Add an Event ----//
-		UUID id = UUID.randomUUID();
-		Event event = new Event(id, "UUID=" + id.toString(), System.currentTimeMillis(),
-				Utils.getBikeByFrameNumber(FRAME_NUMBER_MY_BROMPTON, lBikes).getId(),
-				Utils.getTagByName(TAG_CHAIN, lTags).getId(), null, System.currentTimeMillis(),
-				0, 0 //Transient fields
-		);
-
-		cr.insert(BikeHistProvider.CONTENT_URI_EVENTS, Utils.buildEventContentValues(event));
-
-		id = UUID.randomUUID();
-		String trip = "test trip";
-		event = new Event(id, trip, System.currentTimeMillis() - 1000000,
-				Utils.getBikeByFrameNumber(FRAME_NUMBER_MY_BROMPTON, lBikes).getId(),
-				Utils.getTagByName(TAG_START, lTags).getId(), null, System.currentTimeMillis(),
-				0, 0 //Transient fields
-		);
-
-		cr.insert(BikeHistProvider.CONTENT_URI_EVENTS, Utils.buildEventContentValues(event));
-
-		event = new Event(id, trip, System.currentTimeMillis(),
-				Utils.getBikeByFrameNumber(FRAME_NUMBER_MY_BROMPTON, lBikes).getId(),
-				Utils.getTagByName(TAG_END, lTags).getId(), null, System.currentTimeMillis(),
-				0, 0 //Transient fields
-		);
-
-		cr.insert(BikeHistProvider.CONTENT_URI_EVENTS, Utils.buildEventContentValues(event));
+		// Never do this again
+		SharedPreferences.Editor editor = getSharedPreferences(AppUtils.Prefs.PREF_NAME, 0).edit();
+		editor.putBoolean(PREF_KEY_INIT_APP, true);
+		editor.apply();
 	}
 
 
@@ -211,68 +223,100 @@ public class MainActivity extends ActionBarActivity {
 		super.onCreate(savedInstanceState);
 
 		//Remove for production
+
 		createDummyData();
 
-		setContentView(R.layout.drawer_layout);
-
-		DrawerLayout mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+		setContentView(R.layout.main);
 
 		drawerController = new DrawerController(this, (ListView) findViewById(R.id.drawerBikeList),
 				(ListView) findViewById(R.id.drawerTagTypeList),
 				(ListView) findViewById(R.id.drawerTagList));
 
-		mDrawerToggle = new ActionBarDrawerToggle(
-				this,                  /* host Activity */
-				mDrawerLayout,         /* DrawerLayout object */
-				R.string.drawerOpen,  /* "open drawer_layout" description */
-				R.string.drawerClose  /* "close drawer_layout" description */
-		) {
+		mDrawerLayout = (DrawerLayout) findViewById(R.id.mainDrawerLayoutWidget);
 
-			/** Called when a drawer_layout has settled in a completely closed state. */
-			public void onDrawerClosed(View view) {
-				Log.d(TAG, "onDrawerClosed");
-				super.onDrawerClosed(view);
-				invalidateOptionsMenu();
-				showEventList();
-			}
+		//landscape has no android.support.v4.widget.DrawerLayout
+		if (mDrawerLayout != null) {
 
-			/** Called when a drawer_layout has settled in a completely open state. */
-			public void onDrawerOpened(View drawerView) {
-				Log.d(TAG, "onDrawerOpened");
-				super.onDrawerOpened(drawerView);
-				getSupportActionBar().setTitle(R.string.app_name);
-				invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
-			}
-		};
 
-		// Set the drawer_layout toggle as the DrawerListener
-		mDrawerLayout.setDrawerListener(mDrawerToggle);
+			mDrawerToggle = new ActionBarDrawerToggle(
+					this,                  /* host Activity */
+					mDrawerLayout,         /* DrawerLayout object */
+					R.string.drawerOpen,  /* "open main" description */
+					R.string.drawerClose  /* "close main" description */
+			) {
+
+				/** Called when a main has settled in a completely closed state. */
+				public void onDrawerClosed(View view) {
+					Log.d(TAG, "onDrawerClosed");
+					super.onDrawerClosed(view);
+					invalidateOptionsMenu();
+					showEventList();
+
+					drawerOpen = false;
+
+				}
+
+				/** Called when a main has settled in a completely open state. */
+				public void onDrawerOpened(View drawerView) {
+					Log.d(TAG, "onDrawerOpened");
+					super.onDrawerOpened(drawerView);
+
+					getSupportActionBar().setTitle(R.string.app_name);
+					invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+					drawerOpen = true;
+				}
+			};
+
+			// Set the main toggle as the DrawerListener
+			mDrawerLayout.setDrawerListener(mDrawerToggle);
+		}
+
 
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		getSupportActionBar().setHomeButtonEnabled(true);
+
+		if (findViewById(R.id.mainDetailContainer) != null) {
+			// The detail container view will be present only in the
+			// large-screen layouts (res/values-large and
+			// res/values-sw600dp). If this view is present, then the
+			// activity should be in two-pane mode.
+			mTwoPane = true;
+
+
+		}
 
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		drawerController.reloadDate();
+
+		drawerOpen = getSharedPreferences(AppUtils.Prefs.PREF_NAME, 0).getBoolean(Constants.Prefs.KEY_DRAWER_OPEN, false);
+		drawerController.onChange();
 		showEventList();
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+
+		SharedPreferences.Editor editor = getSharedPreferences(AppUtils.Prefs.PREF_NAME, 0).edit();
+		editor.putBoolean(Constants.Prefs.KEY_DRAWER_OPEN, drawerOpen);
+		editor.apply();
 
 
 	}
 
+	/**
+	 * Only shows list, if Bike and Tag Type is selected in the drawer.
+	 */
 	private void showEventList() {
 
-		//Both, bike and Type must be selected
 		if (drawerController.getSelectedBike() == null || drawerController.getSelectedTagType() == null) {
-			getSupportActionBar().setTitle(R.string.app_name);
-			getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new EmptyContentFragment()).commit();
 			return;
 		}
-
 		//Standard case: bike and Type exist and are selected
-		getSupportActionBar().setTitle(drawerController.getSelectedBike().getName() + "/" + drawerController.getSelectedTagType().getName());
+		getSupportActionBar().setTitle(drawerController.getSelectedBike().getName());
 
 		//Strings with Tag-IDs
 		ArrayList<String> tagIds = new ArrayList<>();
@@ -291,7 +335,7 @@ public class MainActivity extends ActionBarActivity {
 //		// Insert the fragment by replacing any existing fragment
 		FragmentManager fragmentManager = getSupportFragmentManager();
 		fragmentManager.beginTransaction()
-				.replace(R.id.content_frame, fragment)
+				.replace(R.id.mainHeaderContainer, fragment, EVENT_LIST_FRAGMENT_TAG)
 				.commit();
 	}
 
@@ -300,22 +344,51 @@ public class MainActivity extends ActionBarActivity {
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		// If the nav drawer is open, hide action items related to the content view
 //		boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawer);
-//		menu.findItem(R.id.action_websearch).setVisible(!drawerOpen);
+		EntityLoader el = new EntityLoader(this);
+
+		boolean enableActionCreateEvent = !drawerOpen && hasSelection() &&
+				el.tags(drawerController.getSelectedTagType()).size() > 0;
+
+		menu.findItem(R.id.actionCreateEvent).setEnabled(enableActionCreateEvent);
+		menu.findItem(R.id.actionCreateEvent).setVisible(enableActionCreateEvent);
+
+		menu.findItem(R.id.actionConfiguration).setEnabled(!drawerOpen);
+		menu.findItem(R.id.actionConfiguration).setVisible(!drawerOpen);
+
+		menu.findItem(R.id.actionSync).setEnabled(!drawerOpen);
+		menu.findItem(R.id.actionSync).setVisible(!drawerOpen);
+
+		menu.findItem(R.id.actionRefresh).setEnabled(drawerOpen);
+		menu.findItem(R.id.actionRefresh).setVisible(drawerOpen);
+
+
 		return super.onPrepareOptionsMenu(menu);
+	}
+
+	/**
+	 * Returns true, if there is a bike and a Tag Type selected.
+	 */
+	private boolean hasSelection() {
+
+		return drawerController.getSelectedBike() != null && drawerController.getSelectedTagType() != null;
 	}
 
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
 		// Sync the toggle state after onRestoreInstanceState has occurred.
-		mDrawerToggle.syncState();
+		if (mDrawerLayout != null) {
+			mDrawerToggle.syncState();
+		}
 	}
-
 
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
-		mDrawerToggle.onConfigurationChanged(newConfig);
+
+		if (mDrawerLayout != null)
+			mDrawerToggle.onConfigurationChanged(newConfig);
+
 	}
 
 	@Override
@@ -327,54 +400,85 @@ public class MainActivity extends ActionBarActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
+		// Handle action bar event_item clicks here. The action bar will
 		// automatically handle clicks on the Home/Up button, so long
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
 
 		// Pass the event to ActionBarDrawerToggle, if it returns
 		// true, then it has handled the app icon touch event
-		if (mDrawerToggle.onOptionsItemSelected(item)) {
-			return true;
+		if (mDrawerLayout != null) {
+			if (mDrawerToggle.onOptionsItemSelected(item)) {
+				return true;
+			}
 		}
 
-		switch (id) {
+		switch (id)
+
+		{
 			case R.id.action_settings:
+				callPreferences();
 				return true;
-			case R.id.actionBikes:
-				callBikes();
+			case R.id.actionConfiguration:
+				callAdministration();
 				return true;
-			case R.id.actionTags:
-				callTags();
+			case R.id.actionCreateEvent:
+				onItemSelected(null, null);
 				return true;
-			case R.id.actionTagTypes:
-				callTagTypes();
+			case R.id.actionRefresh:
+				if (mDrawerLayout != null) {
+					mDrawerLayout.closeDrawer(Gravity.START);
+				}
+				showEventList();
+				return true;
+			case R.id.actionSync:
+				callSync();
 				return true;
 		}
 
-		return super.onOptionsItemSelected(item);
+		return super.
+
+				onOptionsItemSelected(item);
+
 	}
 
-	/** Calls the master data activity for Bikes */
-	private void callBikes() {
-		Intent intent = new Intent(this, MasterDataListActivity.class);
-		intent.putExtra(MasterDataContract.Type.NAME, MasterDataContract.Type.Values.BIKE);
+	/**
+	 * Starts exporting data.
+	 */
+	private void callSync() {
+		Intent intent = new Intent(this, SaveDataService.class);
+		intent.putExtra(SaveDataService.Contract.ACTION, SaveDataService.Contract.Export.NAME);
+
+		startService(intent);
+
+	}
+
+	private void callPreferences() {
+		startActivity(new Intent(this, SettingsActivity.class));
+	}
+
+	/**
+	 * Calls the master data activity for Tag Types
+	 */
+	private void callAdministration() {
+		Intent intent = new Intent(this, AdministratorActivity.class);
 		startActivity(intent);
 	}
 
-	/** Calls the master data activity for Tag Types */
-	private void callTagTypes() {
-		Intent intent = new Intent(this, MasterDataListActivity.class);
-		intent.putExtra(MasterDataContract.Type.NAME, MasterDataContract.Type.Values.TAG_TYPE);
-		startActivity(intent);
+	@Override
+	public void onChanged() {
+		((EventListFragment) getSupportFragmentManager().findFragmentByTag(EVENT_LIST_FRAGMENT_TAG)).refresh();
+
+		FragmentManager fragmentManager = getSupportFragmentManager();
+		Fragment fragment = fragmentManager.findFragmentByTag(EVENT_DETAIL_FRAGMENT_TAG);
+		fragmentManager.beginTransaction()
+				.remove(fragment)
+				.commit();
 	}
 
-	/** Calls the master data activity for Tags */
-	private void callTags() {
-		Intent intent = new Intent(this, MasterDataListActivity.class);
-		intent.putExtra(MasterDataContract.Type.NAME, MasterDataContract.Type.Values.TAG);
-		startActivity(intent);
+	private static class Constants {
+		static class Prefs {
+			static final String KEY_DRAWER_OPEN = "KEY_DRAWER_OPEN";
+		}
 	}
-
-
 }

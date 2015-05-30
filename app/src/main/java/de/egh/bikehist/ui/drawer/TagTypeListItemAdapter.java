@@ -1,7 +1,6 @@
 package de.egh.bikehist.ui.drawer;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,18 +14,16 @@ import de.egh.bikehist.R;
 import de.egh.bikehist.ui.drawer.DrawerController.TagTypeItem;
 
 
-public class TagTypeListItemAdapter extends ArrayAdapter<TagTypeItem> {
+class TagTypeListItemAdapter extends ArrayAdapter<TagTypeItem> {
 
 	private static final String TAG = TagTypeListItemAdapter.class.getSimpleName();
-	int resource;
-	private TagTypeItem item;
-	private String inflater;
-	private LayoutInflater vi;
+	private final int resource;
+	private final String inflater;
 
-	/** One item can be selected */
-	public TagTypeListItemAdapter(Context _context, int _resource, List<TagTypeItem> _items) {
-		super(_context, _resource, _items);
-		resource = _resource;
+	/** One event_item can be selected */
+	public TagTypeListItemAdapter(Context _context, List<TagTypeItem> _items) {
+		super(_context, R.layout.drawer_tag_types_item, _items);
+		resource = R.layout.drawer_tag_types_item;
 		inflater = Context.LAYOUT_INFLATER_SERVICE;
 	}
 
@@ -36,23 +33,23 @@ public class TagTypeListItemAdapter extends ArrayAdapter<TagTypeItem> {
 		LinearLayout itemView;
 		TextView line;
 
-		item = getItem(position);
+		TagTypeItem item = getItem(position);
 
 		if (convertView == null) {
 			itemView = new LinearLayout(getContext());
-			vi = (LayoutInflater) getContext().getSystemService(inflater);
+			LayoutInflater vi = (LayoutInflater) getContext().getSystemService(inflater);
 			vi.inflate(resource, itemView, true);
 		} else {
 			itemView = (LinearLayout) convertView;
 		}
 
-//		Log.d(TAG, "getView for " + item.getTagType().getName());
+//		Log.d(TAG, "getView for " + event_item.getTagType().getName());
 		line = (TextView) itemView.findViewById(R.id.drawerTagTypeName);
 		line.setText(item.getTagType().getName());
 		if (item.isChecked()) {
-			line.setTextColor(Color.GREEN);
+			line.setTextColor(getContext().getResources().getColor(R.color.eghDrawerSelectedText));
 		} else {
-			line.setTextColor(Color.WHITE);
+			line.setTextColor(getContext().getResources().getColor(R.color.eghDrawerText));
 		}
 
 		return itemView;

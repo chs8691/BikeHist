@@ -2,30 +2,87 @@
 <resources>
 
     <string name="app_name">BikeHist</string>
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="drawerOpen">Open</string>
     <string name="drawerClose">Close</string>
-    <string name="DistanceUnit">KM</string>
-    <string name="empty">leer</string>
+    <string name="DistanceUnit" translatable="false">KM</string>
+    <string name="empty" translatable="false">empty</string>
     <string name="actionBikes">Bikes</string>
-    <string name="title_item_list">Items</string>
-    <string name="title_item_detail">Item Detail</string>
     <string name="dialogBikeDeleteQuestion">Delete bike and all its events?</string>
+    <string name="dialogEventDeleteQuestion">Delete this event?</string>
     <string name="dialogTagTypeDeleteQuestion">Delete tag type?</string>
     <string name="dialogTagDeleteQuestion">Delete tag?</string>
-    <string name="ok">OK</string>
+    <string name="ok" translatable="false">OK</string>
     <string name="cancel">Cancel</string>
-    <string name="messageDeleteBikeSuccess">Deleted %1$d bike with %2$d event(s).</string>
-    <string name="messageDeleteTagTypesSuccess">Deleted %1$d tag type.</string>
-    <string name="messageDeleteTagsSuccess">Deleted %1$d tags and changed %2$d events.</string>
+    <string name="messageDeleteEventSuccess">Deleted %1d events.</string>
+    <string name="messageDeleteBikeSuccess">Deleted %1$d bike with %2$d events.</string>
+    <string name="messageDeleteTagTypesSuccess">Deleted %1$d tag types.</string>
+    <string name="messageDeleteTagsSuccess">Deleted %1$d tags.</string>
     <string name="messageDeleteError">Deleting failed !</string>
     <string name="titleEditTag">Edit Tag</string>
     <string name="titleEditTagType">Edit Tag Type</string>
     <string name="titleEditBike">Edit Bike</string>
+    <string name="titleEditEvent">Edit Event</string>
     <string name="titleCreateTag">Create Tag</string>
     <string name="titleCreateTagType">Create Tag Type</string>
     <string name="titleCreateBike">Create Bike</string>
+    <string name="titleCreateEvent">Create Event</string>
+    <string name="entityNamePluralEvents" translatable="false">Events</string>
+    <string name="entityNamePluralBikes" translatable="false">Bikes</string>
+    <string name="entityNamePluralTagTypes" translatable="false">TagTypes</string>
+    <string name="entityNamePluralTags" translatable="false">Tags</string>
+    <string name="events">Events</string>
+    <string name="event">Event</string>
+    <string name="bikes">Bikes</string>
+    <string name="bike">Bike</string>
+    <string name="tag">Tag</string>
+    <string name="tagType">Tag Type</string>
+    <string name="tags">Tags</string>
+    <string name="tagTypes">Tag Types</string>
     <string name="actionTags">Tags</string>
     <string name="actionTagTypes">Tag Types</string>
+    <string name="titleEvent">Event</string>
+    <string name="messageNameMissing">Name missing.</string>
+    <string name="messageEmptyTagType" translatable="false">"Tag Type %1$s has no Tags. Please create Tags first."</string>
+    <string name="tagNameChain">Chain</string>
+    <string name="tagTypeNameMaintenance">Maintenance</string>
+    <string name="tagTypeNameTimeEvent">Time Event</string>
+    <string name="tagNameTyre">Tyre</string>
+    <string name="frameNumber">Frame Number</string>
+    <string name="tagNameNewYear">New year</string>
+    <string name="bikeNameBike1">My Bike</string>
+    <string name="emptyList">Empty list</string>
+    <string name="messageFrameNumberMissing">Frame Number missing</string>
+    <string name="messageSaved">Saved</string>
+    <string name="labelName">Name</string>
+    <string name="labelEventName">Event Name</string>
+    <string name="buttonSave">Save</string>
+    <string name="labelTag">Tag</string>
+    <string name="labelDistance">Distance</string>
+    <string name="labelDate">Date</string>
+    <string name="labelBikesName">Bike\'s name</string>
+    <string name="labelTagsName">Tag\'s name</string>
+    <string name="labelTagType">Tag Type</string>
+    <string name="labelTagTypesName">Tag Type\'s name</string>
+    <string name="km" translatable="false">KM</string>
+    <string name="dummyHeader" translatable="false">Header</string>
+    <string name="dummyDate" translatable="false">--.--.----</string>
+    <string name="dummyDistance" translatable="false">---</string>
+    <string name="dummyTime" translatable="false">--:--:--</string>
+    <string name="dummyDuration" translatable="false">xxxxxx xxx xxxxx</string>
+    <string name="dummyMemo" translatable="false">Lorem ipsum dolor sit amet</string>
+    <string name="labelBikeName">Name of the bike</string>
+    <string name="dummyFrameNumber" translatable="false">frame-number-of-the-bike</string>
+    <string name="dummyTagName" translatable="false">Tag name</string>
+    <string name="dummyTagTypeName" translatable="false">Tag Type name</string>
+    <string name="actionDelete">Delete</string>
+    <string name="actionCreateEvent">Create Event</string>
+    <string name="actionCreate">New</string>
+    <string name="directoryPickerTitle">Please select a folder</string>
+    <string name="directoryPickerButton">Use this folder</string>
+    <string name="messageExternalStorageNotWritable">External Storage not writable</string>
+    <string name="action_configuration">Configuration</string>
+    <string name="administration">Settings</string>
+    <string name="actionSynchronize">Synchronize</string>
+    <string name="actionRefresh">actionRefresh</string>
 </resources>

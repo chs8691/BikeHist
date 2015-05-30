@@ -15,30 +15,29 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import de.egh.bikehist.R;
+import de.egh.bikehist.AppUtils;
 import de.egh.bikehist.model.Bike;
 import de.egh.bikehist.model.Tag;
 import de.egh.bikehist.model.TagType;
-import de.egh.bikehist.model.Utils;
+import de.egh.bikehist.model.Utils.EntityUtilsFactory;
 import de.egh.bikehist.persistance.BikeHistProvider;
 
-/** Contains all data for the TagType and corresponding Tags to show in the drawer. */
+/**
+ * Contains all data for the TagType and corresponding Tags to show in the drawer.
+ */
 public class DrawerController {
 	private static final String TAG = DrawerController.class.getSimpleName();
-
-	private Context context;
-	private ListView drawerBikeList;
-	private ListView drawerTagTypeList;
-	private ListView drawerTagList;
-	private TagListItemAdapter aaTagList;
-
-	//Don't kill this instance
-	private Bikes bikes = new Bikes();
-
-	//Don't kill this instance
-	private TagTypes tagTypes = new TagTypes();
 	private final BikeListItemAdapter aaBikeList;
 	private final TagTypeListItemAdapter aaTagTypeList;
+	private final Context context;
+	private final ListView drawerBikeList;
+	private final ListView drawerTagTypeList;
+	private final ListView drawerTagList;
+	private final TagListItemAdapter aaTagList;
+	//Don't kill this instance
+	private final Bikes bikes = new Bikes();
+	//Don't kill this instance
+	private final TagTypes tagTypes = new TagTypes();
 
 	public DrawerController(Context context, ListView drawerBikeList, ListView drawerTagTypeList, ListView drawerTagList
 	) {
@@ -49,25 +48,27 @@ public class DrawerController {
 		this.drawerTagList = drawerTagList;
 
 		//Drawer: List of Bikes
-		aaBikeList = new BikeListItemAdapter(context, R.layout.drawer_tag_types_item, bikes.getList());
+		aaBikeList = new BikeListItemAdapter(context, bikes.getList());
 		drawerBikeList.setAdapter(aaBikeList);
 		drawerBikeList.setOnItemClickListener(new DrawerBikeItemClickListener());
 
 		//Drawer: List of TagTypes
-		aaTagTypeList = new TagTypeListItemAdapter(context, R.layout.drawer_tag_types_item, tagTypes.getList());
+		aaTagTypeList = new TagTypeListItemAdapter(context, tagTypes.getList());
 		drawerTagTypeList.setAdapter(aaTagTypeList);
 		drawerTagTypeList.setOnItemClickListener(new DrawerTagTypeItemClickListener());
 
 		//Drawer: List of Tags
-		aaTagList = new TagListItemAdapter(context, R.layout.drawer_tags_item, tagTypes.getActualTagItems());
+		aaTagList = new TagListItemAdapter(context, tagTypes.getActualTagItems());
 		drawerTagList.setAdapter(aaTagList);
 		drawerTagList.setOnItemClickListener(new DrawerTagItemClickListener());
 
-		reloadDate();
+		onChange();
 	}
 
-	/** Call this after data have been changed */
-	public void reloadDate() {
+	/**
+	 * Call this after data have been changed
+	 */
+	public void onChange() {
 		loadDataFromProvider();
 		loadPrefs();
 		aaTagList.notifyDataSetChanged();
@@ -78,7 +79,7 @@ public class DrawerController {
 	public void onStop() {
 		// We need an Editor object to make preference changes.
 		// All objects are from android.context.Context
-		SharedPreferences settings = context.getSharedPreferences(Constants.Pref.NAME, 0);
+		SharedPreferences settings = context.getSharedPreferences(AppUtils.Prefs.PREF_NAME, 0);
 		SharedPreferences.Editor editor = settings.edit();
 		editor.putString(Constants.Pref.Keys.ACTUAL_BIKE_ID, bikes.getSelectedBike() == null
 				? "" : bikes.getSelectedBike().getId().toString());
@@ -100,15 +101,17 @@ public class DrawerController {
 		editor.apply();
 	}
 
-	/** Returns null, if no TagType is selected. */
+	/**
+	 * Returns null, if no TagType is selected.
+	 */
 	public TagType getSelectedTagType() {
 		return tagTypes.getSelectedTagType();
 	}
 
 	/**
-	 Returns all selected Tags for the actual TagType.
-
-	 @return List with selected Tags. Can be empty.
+	 * Returns all selected Tags for the actual TagType.
+	 *
+	 * @return List with selected Tags. Can be empty.
 	 */
 	public List<Tag> getSelectedTags() {
 		List<Tag> tags = new ArrayList<>();
@@ -121,52 +124,65 @@ public class DrawerController {
 		return tags;
 	}
 
-	/** Returns null, if no Bike selected. */
+	/**
+	 * Returns null, if no Bike selected.
+	 */
 	public Bike getSelectedBike() {
 		return bikes.getSelectedBike();
 	}
 
+	/**
+	 * Set the selections for the lists. There must always be a bike and a type selected.
+	 */
 	private void loadPrefs() {
 
-		SharedPreferences sharedPrefs = context.getSharedPreferences(Constants.Pref.NAME, 0);
+		SharedPreferences sharedPrefs = context.getSharedPreferences(AppUtils.Prefs.PREF_NAME, 0);
 		//Load last status from Prefs and validate this: Bike
 		//Validate actual value or, if there is no actual value, take first entry as default
 
 		String bikeIdString = sharedPrefs.getString(Constants.Pref.Keys.ACTUAL_BIKE_ID, "");
 		if (!bikeIdString.isEmpty()) {
 			try {
-				//Select this one, if ID is valid
+				//Select this one, if EVENT_ID is valid
 				if (!bikes.setSelectedItem(UUID.fromString(bikeIdString))) {
-					//Unvalid ID, select first entry
+					//Invalid EVENT_ID, select first entry
 					bikes.setSelectedItem(0);
 				}
 			} catch (IllegalArgumentException e) {
 				Log.v(TAG, "Invalid Bike id from preferences " + bikeIdString);
 			}
 		}
+		//First call: select first bike
+		else if (bikes.getList().size() > 0) {
+			bikes.setSelectedItem(0);
+		}
 
 		//Same for TagType
 		String tagTypeIdString = sharedPrefs.getString(Constants.Pref.Keys.ACTUAL_TAG_TYPE_ID, "");
 		if (!tagTypeIdString.isEmpty()) {
 			try {
-				//Select this one, if ID is valid
+				//Select this one, if EVENT_ID is valid
 				if (!tagTypes.setSelectedItem(UUID.fromString(tagTypeIdString))) {
-					//Unvalid ID, select first entry
+					//Invalid EVENT_ID, select first entry
 					tagTypes.setSelectedItem(0);
 				}
 			} catch (IllegalArgumentException e) {
 				Log.v(TAG, "Invalid TagType id from preferences " + tagTypeIdString);
 			}
 		}
+		//First call: select first Tag Type
+		else if (tagTypes.getList().size() > 0) {
+			tagTypes.setSelectedItem(0);
+		}
 
 		Set<String> tagStringSet = sharedPrefs.getStringSet(Constants.Pref.Keys.ACTUAL_TAG_IDS, null);
 		if (tagStringSet != null) {
-			//String has two parts, separated by space: ID of TagType + ' ' + Tag
+			//String has two parts, separated by space: EVENT_ID of TagType + ' ' + Tag
 			for (String line : tagStringSet) {
 				String[] parts = line.split(" ");
 				if (parts.length == 2) {
 					try {
-						tagTypes.addSelelectedTag(UUID.fromString(parts[0]), UUID.fromString(parts[1]));
+						tagTypes.addSelectedTag(UUID.fromString(parts[0]), UUID.fromString(parts[1]));
 					} catch (Exception e) {
 						Log.v(TAG, "IDs for TagType / Tag could not be solved.");
 					}
@@ -182,7 +198,9 @@ public class DrawerController {
 //		aaTagList.notifyDataSetChanged();
 //	}
 
-	/** Select data from persistance. */
+	/**
+	 * Select data from storage.
+	 */
 	private void loadDataFromProvider() {
 
 		ContentResolver cr = context.getContentResolver();
@@ -194,7 +212,7 @@ public class DrawerController {
 
 		if (c.moveToFirst()) {
 			do {
-				TagType tagType = Utils.buildTagTypeFromCursor(c);
+				TagType tagType = EntityUtilsFactory.createTagTypeUtils(context).build(c);
 				tagTypes.add(tagType);
 			} while (c.moveToNext());
 		}
@@ -205,7 +223,7 @@ public class DrawerController {
 
 		if (c.moveToFirst()) {
 			do {
-				tagTypes.addTag(Utils.buildTagFromCursor(c));
+				tagTypes.addTag(EntityUtilsFactory.createTagUtils(context).build(c));
 			} while (c.moveToNext());
 		}
 
@@ -215,7 +233,7 @@ public class DrawerController {
 
 		if (c.moveToFirst()) {
 			do {
-				bikes.add(Utils.buildBikeFromCursor(c));
+				bikes.add(EntityUtilsFactory.createBikeUtils(context).build(c));
 			} while (c.moveToNext());
 		}
 
@@ -223,8 +241,6 @@ public class DrawerController {
 
 	private static final class Constants {
 		static final class Pref {
-			static final String NAME = "default";
-
 			static final class Keys {
 				static final String ACTUAL_BIKE_ID = "ACTUAL_BIKE_ID";
 				static final String ACTUAL_TAG_TYPE_ID = "ACTUAL_TAG_TYPE_ID";
@@ -263,23 +279,27 @@ public class DrawerController {
 
 	}
 
-	/** Only instantiate TagTypes once, because ArrayAdapter handles the reference to the List. */
+	/**
+	 * Only instantiate TagTypes once, because ArrayAdapter handles the reference to the List.
+	 */
 	private class TagTypes {
 
-		private List<TagTypeItem> tagTypeItems = new ArrayList<>();
-		private List<TagItem> actualTagItems = new ArrayList<>();
+		private final List<TagTypeItem> tagTypeItems = new ArrayList<>();
+		private final List<TagItem> actualTagItems = new ArrayList<>();
 
 		/**
-		 Returns reference to List of the selected TagItem for the actual TagType.
-		 Don't edit the list.
-
-		 @return List can be empty
+		 * Returns reference to List of the selected TagItem for the actual TagType.
+		 * Don't edit the list.
+		 *
+		 * @return List can be empty
 		 */
 		public List<TagItem> getActualTagItems() {
 			return actualTagItems;
 		}
 
-		/** Returns reference of List. Only use this for the ArrayAdapter! */
+		/**
+		 * Returns reference of List. Only use this for the ArrayAdapter!
+		 */
 		public List<TagTypeItem> getList() {
 			return tagTypeItems;
 		}
@@ -289,11 +309,10 @@ public class DrawerController {
 		}
 
 		/**
-		 Set actual TagType (there can only be one selected) and loads Tags of this TagType.
-
-		 @param pos
-		 Non negative integer value.
-		 @return true, if checked was set successfully.
+		 * Set actual TagType (there can only be one selected) and loads Tags of this TagType.
+		 *
+		 * @param pos Non negative integer value.
+		 * @return true, if checked was set successfully.
 		 */
 		public boolean setSelectedItem(int pos) {
 			if (pos < 0 || pos >= tagTypeItems.size()) {
@@ -318,22 +337,20 @@ public class DrawerController {
 
 		}
 
-		public boolean addTag(Tag tag) {
+		public void addTag(Tag tag) {
 			for (TagTypeItem item : tagTypeItems) {
 				if (item.getTagType().getId().equals(tag.getTagTypeId())) {
 					item.addTag(tag);
-					return true;
+					return;
 				}
 			}
-			return false;
 		}
 
 		/**
-		 Sets the actual TagType and update the corresponding TagList
-
-		 @param id
-		 UUID of the TagType
-		 @return true if TagType could be selected
+		 * Sets the actual TagType and update the corresponding TagList
+		 *
+		 * @param id UUID of the TagType
+		 * @return true if TagType could be selected
 		 */
 		public boolean setSelectedItem(UUID id) {
 			if (id == null) {
@@ -350,12 +367,16 @@ public class DrawerController {
 			return false;
 		}
 
-		/** Doesn't care for duplicate entries. */
+		/**
+		 * Doesn't care for duplicate entries.
+		 */
 		public void add(TagType tagType) {
 			tagTypeItems.add(new TagTypeItem(tagType));
 		}
 
-		/** Returns null, if no TagType is selected. */
+		/**
+		 * Returns null, if no TagType is selected.
+		 */
 		public TagType getSelectedTagType() {
 			for (TagTypeItem item : tagTypeItems) {
 				if (item.isChecked()) {
@@ -366,17 +387,15 @@ public class DrawerController {
 		}
 
 		/**
-		 Only updates first found TagType/Tag combinition.
-
-		 @param tagTypeId
-		 UUID of the TagType
-		 @param tagId
-		 UUID of the Tag
-		 @return true, if Tag could be found and checked.
+		 * Only updates first found TagType/Tag combination.
+		 *
+		 * @param tagTypeId UUID of the TagType
+		 * @param tagId     UUID of the Tag
+		 * @return true, if Tag could be found and checked.
 		 */
-		public boolean addSelelectedTag(UUID tagTypeId, UUID tagId) {
+		public void addSelectedTag(UUID tagTypeId, UUID tagId) {
 			if (tagTypeId == null || tagId == null) {
-				return false;
+				return;
 			}
 
 			for (TagTypeItem item : tagTypeItems) {
@@ -384,12 +403,11 @@ public class DrawerController {
 					for (TagItem tagItem : item.getTags()) {
 						if (tagItem.getTag().getId().equals(tagId)) {
 							tagItem.setChecked(true);
-							return true;
+							return;
 						}
 					}
 				}
 			}
-			return false;
 		}
 
 	}
@@ -434,18 +452,18 @@ public class DrawerController {
 //
 //			// Check id
 //			boolean valid = false;
-//			for (TagItem item : tagItems) {
-//				if (item.getTag().getId().equals(id)) {
+//			for (TagItem event_item : tagItems) {
+//				if (event_item.getTag().getId().equals(id)) {
 //					valid = true;
 //				}
 //			}
 //			if (valid) {
-//				for (TagItem item : tagItems) {
-//					item.setChecked(item.getTag().getId().equals(id));
+//				for (TagItem event_item : tagItems) {
+//					event_item.setChecked(event_item.getTag().getId().equals(id));
 //				}
 //				return true;
 //			} else {
-//				//Unknown ID
+//				//Unknown EVENT_ID
 //				return false;
 //			}
 //
@@ -458,9 +476,9 @@ public class DrawerController {
 //
 //		/** Returns null, if no Tag is selected. */
 //		public Tag getSelectedTag() {
-//			for (TagItem item : tagItems) {
-//				if (item.isChecked()) {
-//					return item.getTag();
+//			for (TagItem event_item : tagItems) {
+//				if (event_item.isChecked()) {
+//					return event_item.getTag();
 //				}
 //			}
 //			return null;
@@ -468,12 +486,16 @@ public class DrawerController {
 //
 //	}
 
-	/** Only instantiate Bikes once, because ArrayAdapter hadles the reference to the List. */
+	/**
+	 * Only instantiate Bikes once, because ArrayAdapter handles the reference to the List.
+	 */
 	private class Bikes {
 
-		private List<BikeItem> bikeItems = new ArrayList<>();
+		private final List<BikeItem> bikeItems = new ArrayList<>();
 
-		/** Returns reference of List. Only use this for the ArrayAdapter! */
+		/**
+		 * Returns reference of List. Only use this for the ArrayAdapter!
+		 */
 		public List<BikeItem> getList() {
 			return bikeItems;
 		}
@@ -483,24 +505,24 @@ public class DrawerController {
 		}
 
 		/**
-		 Returns true, if checked was set successfully.
-
-		 @param pos
-		 Non negative integer value.
+		 * Returns true, if checked was set successfully.
+		 *
+		 * @param pos Non negative integer value.
 		 */
-		public boolean setSelectedItem(int pos) {
+		public void setSelectedItem(int pos) {
 			if (pos < 0 || pos >= bikeItems.size()) {
-				return false;
+				return;
 			}
 
 			for (int i = 0; i < bikeItems.size(); i++) {
 				bikeItems.get(i).setChecked(i == pos);
 			}
-			return true;
 
 		}
 
-		/** Returns true, if checked was set successfully. */
+		/**
+		 * Returns true, if checked was set successfully.
+		 */
 		public boolean setSelectedItem(UUID id) {
 			if (id == null) {
 				return false;
@@ -519,18 +541,22 @@ public class DrawerController {
 				}
 				return true;
 			} else {
-				//Unknown ID
+				//Unknown EVENT_ID
 				return false;
 			}
 
 		}
 
-		/** Doesn't care for duplicate entries. */
+		/**
+		 * Doesn't care for duplicate entries.
+		 */
 		public void add(Bike bike) {
 			bikeItems.add(new BikeItem(bike));
 		}
 
-		/** Returns null, if no Bike is selected. */
+		/**
+		 * Returns null, if no Bike is selected.
+		 */
 		public Bike getSelectedBike() {
 			for (BikeItem item : bikeItems) {
 				if (item.isChecked()) {
@@ -542,9 +568,11 @@ public class DrawerController {
 
 	}
 
-	/** An entry in the shown list of bikes */
+	/**
+	 * An entry in the shown list of bikes
+	 */
 	class BikeItem {
-		private Bike bike;
+		private final Bike bike;
 		private boolean checked;
 
 		private BikeItem(Bike bike) {
@@ -564,11 +592,13 @@ public class DrawerController {
 		}
 	}
 
-	/** An entry in the shown list of TagTypes */
+	/**
+	 * An entry in the shown list of TagTypes
+	 */
 	public class TagTypeItem {
-		private List<TagItem> tags = new ArrayList<>();
+		private final List<TagItem> tags = new ArrayList<>();
+		private final TagType tagType;
 		private boolean checked;
-		private TagType tagType;
 
 		private TagTypeItem(TagType tagType) {
 			this.tagType = tagType;
@@ -597,7 +627,7 @@ public class DrawerController {
 	}
 
 	public class TagItem {
-		private Tag tag;
+		private final Tag tag;
 		private boolean checked;
 
 		private TagItem(Tag tag) {
@@ -608,12 +638,12 @@ public class DrawerController {
 			return checked;
 		}
 
-		public Tag getTag() {
-			return tag;
-		}
-
 		public void setChecked(boolean checked) {
 			this.checked = checked;
+		}
+
+		public Tag getTag() {
+			return tag;
 		}
 	}
 }

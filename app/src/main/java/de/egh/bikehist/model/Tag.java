@@ -4,9 +4,27 @@ import java.util.UUID;
 
 /** Functional class: Tag of am Entry. */
 public class Tag implements ModelType{
-	private UUID id;
+	private final UUID id;
 	private UUID tagTypeId;
 	private String name;
+	private boolean deleted;
+	private long touchedAt;
+
+	public boolean isDeleted() {
+		return deleted;
+	}
+
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
+	}
+
+	public long getTouchedAt() {
+		return touchedAt;
+	}
+
+	public void setTouchedAt(long touchedAt) {
+		this.touchedAt = touchedAt;
+	}
 
 	/**
 	 A Tag has a TagType and should be unique for all TagTypes
@@ -14,10 +32,12 @@ public class Tag implements ModelType{
 	 @param name String with description
 	 @param tagTypeId UUID of the TagType
 	 */
-	public Tag(UUID id, String name, UUID tagTypeId) {
+	public Tag(UUID id, String name, UUID tagTypeId, boolean deleted, long touchedAt) {
 		this.id = id;
 		this.tagTypeId = tagTypeId;
 		this.name = name;
+		this.deleted = deleted;
+		this.touchedAt = touchedAt;
 	}
 
 	public UUID getTagTypeId() {

@@ -5,7 +5,7 @@
     <item
         android:id="@+id/actionMasterDataDelete"
         android:orderInCategory="1"
-        android:title="Delete"
+        android:title="@string/actionDelete"
         android:icon="@drawable/ic_action_remove"
         app:showAsAction="always"/>
 </menu>

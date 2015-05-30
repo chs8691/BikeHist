@@ -2,9 +2,9 @@ package de.egh.bikehist.model;
 
 /** Data Type: Geological position. */
 public class GeoLocation {
-	private double longitude;
-	private double latitude;
-	private double altitude;
+	private final double longitude;
+	private final double latitude;
+	private final double altitude;
 
 	/**
 	 Represents a geographical point

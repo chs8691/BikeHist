@@ -3,20 +3,30 @@
       xmlns:tools="http://schemas.android.com/tools"
       tools:context=".MainActivity">
     <item
-        android:id="@+id/actionBikes"
-        android:orderInCategory="1"
-        android:title="@string/actionBikes"
-        app:showAsAction="never"/>
+        android:id="@+id/actionCreateEvent"
+        android:orderInCategory="10"
+        android:icon="@drawable/ic_action_new"
+        android:title="@string/actionCreateEvent"
+        app:showAsAction="ifRoom"/>
     <item
-        android:id="@+id/actionTagTypes"
-        android:orderInCategory="1"
-        android:title="@string/actionTagTypes"
-        app:showAsAction="never"/>
+        android:id="@+id/actionRefresh"
+        android:orderInCategory="20"
+        android:icon="@drawable/ic_action_refresh"
+        android:title="@string/actionRefresh"
+        app:showAsAction="ifRoom"/>
     <item
-        android:id="@+id/actionTags"
-        android:orderInCategory="1"
-        android:title="@string/actionTags"
-        app:showAsAction="never"/>
+        android:id="@+id/actionSync"
+        android:orderInCategory="20"
+        android:icon="@drawable/ic_action_import_export"
+        android:title="@string/actionSynchronize"
+        app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/actionConfiguration"
+        android:orderInCategory="30"
+        android:icon="@drawable/ic_action_settings"
+        android:title="@string/action_configuration"
+        app:showAsAction="ifRoom"/>
+
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"
