@@ -1,0 +1,19 @@
+ {
+    "timestamp": 912345678901,
+    "bikes":[
+        {
+			"id": "123-FG-ASDFA345ET-123",
+            "deleted": "0",
+            "touchedAt": "123456787980",
+            "name": "Brompton",
+            "frameNumber": "BROMPTON-123345",
+        },
+		 {
+		 "id": "///-FG-ASDFA345ET-&&&",
+		 "deleted": "0",
+		 "touchedAt": "123456765433",
+		 "name": "Giant",
+		 "frameNumber": "GIANT-123345",
+		 }
+    ]
+ }

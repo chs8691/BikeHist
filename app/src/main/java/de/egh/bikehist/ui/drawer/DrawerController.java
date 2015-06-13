@@ -6,7 +6,9 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import java.util.ArrayList;
@@ -38,14 +40,17 @@ public class DrawerController {
 	private final Bikes bikes = new Bikes();
 	//Don't kill this instance
 	private final TagTypes tagTypes = new TagTypes();
+	private Callbacks callbacks;
 
-	public DrawerController(Context context, ListView drawerBikeList, ListView drawerTagTypeList, ListView drawerTagList
-	) {
+	public DrawerController(Context context, ListView drawerBikeList, ListView drawerTagTypeList,
+	                        ListView drawerTagList, Callbacks callbacks) {
+
 		this.context = context;
 
 		this.drawerBikeList = drawerBikeList;
 		this.drawerTagTypeList = drawerTagTypeList;
 		this.drawerTagList = drawerTagList;
+		this.callbacks = callbacks;
 
 		//Drawer: List of Bikes
 		aaBikeList = new BikeListItemAdapter(context, bikes.getList());
@@ -62,7 +67,28 @@ public class DrawerController {
 		drawerTagList.setAdapter(aaTagList);
 		drawerTagList.setOnItemClickListener(new DrawerTagItemClickListener());
 
+
 		onChange();
+	}
+
+	public void setListViewHeightBasedOnChildren(ListView listView) {
+		ArrayAdapter listAdapter = (ArrayAdapter) listView.getAdapter();
+		if (listAdapter == null) {
+			// pre-condition
+			return;
+		}
+
+		int totalHeight = 0;
+		for (int i = 0; i < listAdapter.getCount(); i++) {
+			View listItem = listAdapter.getView(i, null, listView);
+			listItem.measure(0, 0);
+			totalHeight += listItem.getMeasuredHeight();
+		}
+
+		ViewGroup.LayoutParams params = listView.getLayoutParams();
+		params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
+		listView.setLayoutParams(params);
+		listView.requestLayout();
 	}
 
 	/**
@@ -74,6 +100,22 @@ public class DrawerController {
 		aaTagList.notifyDataSetChanged();
 		aaBikeList.notifyDataSetChanged();
 		aaTagTypeList.notifyDataSetChanged();
+
+		//Calculate height for scrolling
+		setListViewsHeight();
+
+	}
+
+	/**
+	 * ListView in ScrollView-Issue: ListView have not to be scrollable.
+	 * So we have to maximaize their heights.
+	 */
+	private void setListViewsHeight() {
+		//Show all items of the lists
+		setListViewHeightBasedOnChildren(drawerBikeList);
+		setListViewHeightBasedOnChildren(drawerTagTypeList);
+		setListViewHeightBasedOnChildren(drawerTagList);
+
 	}
 
 	public void onStop() {
@@ -192,12 +234,6 @@ public class DrawerController {
 
 	}
 
-//	/** Build list with all Tags for the actual TagType */
-//	private void fillTags() {
-//		tagTypes.fillTagItemsForSelectedTagType(tagItems);
-//		aaTagList.notifyDataSetChanged();
-//	}
-
 	/**
 	 * Select data from storage.
 	 */
@@ -208,7 +244,12 @@ public class DrawerController {
 
 		//--- TagTypes: Return all the saved data ---//
 		tagTypes.clear();
-		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_TAG_TYPES, null, null, null, null);
+		Cursor c = cr.query(
+				BikeHistProvider.CONTENT_URI_TAG_TYPES,
+				null,
+				BikeHistProvider.BikeHistContract.Tables.BikeHistEntity.Deleted.NAME + "=?",
+				new String[]{BikeHistProvider.BikeHistContract.Boolean.False.asString},
+				null);
 
 		if (c.moveToFirst()) {
 			do {
@@ -219,7 +260,11 @@ public class DrawerController {
 
 
 		//--- Tags: Return all the saved data ---//
-		c = cr.query(BikeHistProvider.CONTENT_URI_TAGS, null, null, null, null);
+		c = cr.query(BikeHistProvider.CONTENT_URI_TAGS,
+				null,
+				BikeHistProvider.BikeHistContract.Tables.BikeHistEntity.Deleted.NAME + "=?",
+				new String[]{BikeHistProvider.BikeHistContract.Boolean.False.asString},
+				null);
 
 		if (c.moveToFirst()) {
 			do {
@@ -229,7 +274,11 @@ public class DrawerController {
 
 		//--- Bikes: Return all the saved data ---//
 		bikes.clear();
-		c = cr.query(BikeHistProvider.CONTENT_URI_BIKES, null, null, null, null);
+		c = cr.query(BikeHistProvider.CONTENT_URI_BIKES,
+				null,
+				BikeHistProvider.BikeHistContract.Tables.BikeHistEntity.Deleted.NAME + "=?",
+				new String[]{BikeHistProvider.BikeHistContract.Boolean.False.asString},
+				null);
 
 		if (c.moveToFirst()) {
 			do {
@@ -237,6 +286,23 @@ public class DrawerController {
 			} while (c.moveToNext());
 		}
 
+	}
+
+//	/** Build list with all Tags for the actual TagType */
+//	private void fillTags() {
+//		tagTypes.fillTagItemsForSelectedTagType(tagItems);
+//		aaTagList.notifyDataSetChanged();
+//	}
+
+	/**
+	 * Events for the consumer
+	 */
+	public interface Callbacks {
+
+		/**
+		 * Fired, when a item was selected.
+		 */
+		void onDrawerControllerSelectionChanged();
 	}
 
 	private static final class Constants {
@@ -255,6 +321,7 @@ public class DrawerController {
 			boolean check = !tagTypes.getActualTagItems().get(position).isChecked();
 			drawerTagList.setItemChecked(position, check);
 			tagTypes.getActualTagItems().get(position).setChecked(check);
+			callbacks.onDrawerControllerSelectionChanged();
 		}
 
 	}
@@ -264,6 +331,8 @@ public class DrawerController {
 		public void onItemClick(AdapterView parent, View view, int position, long id) {
 			bikes.setSelectedItem(position);
 			drawerBikeList.setItemChecked(position, true);
+			callbacks.onDrawerControllerSelectionChanged();
+
 		}
 
 	}
@@ -275,6 +344,10 @@ public class DrawerController {
 			drawerTagTypeList.setItemChecked(position, true);
 			//Corresponding TagList was updated by setSelectedItem()
 			aaTagList.notifyDataSetChanged();
+
+			setListViewsHeight();
+			callbacks.onDrawerControllerSelectionChanged();
+
 		}
 
 	}

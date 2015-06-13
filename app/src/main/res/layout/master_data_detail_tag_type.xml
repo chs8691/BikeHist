@@ -1,0 +1,46 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="20dp"
+    tools:context="de.egh.bikehist.ui.masterdata.MasterDataDetailFragment">
+
+    <TextView
+        android:id="@+id/master_data_fragment_item_detail_tag_type_name_label"
+        style="?android:attr/textAppearanceMedium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:paddingBottom="5dp"
+        android:paddingTop="20dp"
+        android:text="@string/labelName"/>
+
+    <EditText
+        android:id="@+id/master_data_fragment_item_detail_tag_type_name"
+        style="?android:attr/textAppearanceLarge"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/master_data_fragment_item_detail_tag_type_name_label"
+        android:hint="@string/labelTagTypesName"
+        android:inputType="text"
+        android:textIsSelectable="true"/>
+
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/master_data_fragment_item_detail_tag_type_save"
+        android:layout_marginTop="40dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        android:layout_below="@+id/master_data_fragment_item_detail_tag_type_name"
+        android:text="@string/buttonSave"
+        />
+
+</RelativeLayout>

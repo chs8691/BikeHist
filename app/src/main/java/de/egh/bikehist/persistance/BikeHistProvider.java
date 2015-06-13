@@ -536,6 +536,22 @@ public class BikeHistProvider extends ContentProvider {
 		 */
 		static final String URI_PATH = "de.egh.provider.bikehist";
 
+
+		/**
+		 * ContentProvider doesn't hide that SQLite database has no Boolean type. Use Int instead.
+		 */
+		public final class Boolean {
+			public final class True {
+				public static final int asInt = 1;
+				public static final String asString = "1";
+			}
+
+			public final class False {
+				public static final int asInt = 0;
+				public static final String asString = "0";
+			}
+		}
+
 		/**
 		 * For all tables: EVENT_ID is the UUID, not database table id (_ID)
 		 */
@@ -547,118 +563,162 @@ public class BikeHistProvider extends ContentProvider {
 			 */
 			public static final String _ID = "_id";
 
-			/** Base fields for all Entities.*/
+			/**
+			 * Base fields for all Entities.
+			 */
 			public abstract class BikeHistEntity {
 
-				/** UUID */
+				/**
+				 * UUID
+				 */
 				public final class Id {
 					public static final int NUMBER = 1;
 					public static final String NAME = "id";
 				}
-				/** Readable name */
+
+				/**
+				 * Readable name
+				 */
 				public final class Name {
 					public static final int NUMBER = 2;
 					public static final String NAME = "name";
 				}
 
-				/** Boolean: true, if dataset is deleted, otherwise false */
+				/**
+				 * Int as Boolean: 1 (true), if dataset is deleted, otherwise 0
+				 */
 				public final class Deleted {
 					public static final int NUMBER = 3;
 					public static final String NAME = "deleted";
 				}
 
 
-				/** system time of last touch (modified data)*/
+				/**
+				 * system time of last touch (modified data)
+				 */
 				public final class TouchedAt {
 					public static final int NUMBER = 4;
 					public static final String NAME = "touchedAt";
 				}
 			}
 
-			/** Additional constants for table of Tags, base definition, see BikeHistEntity*/
-			public final class Tag extends BikeHistEntity{
-				/** Name of the table */
+			/**
+			 * Additional constants for table of Tags, base definition, see BikeHistEntity
+			 */
+			public final class Tag extends BikeHistEntity {
+				/**
+				 * Name of the table
+				 */
 				public static final String NAME = "tags";
 
-				/** Foreign key: ID of TagType*/
+				/**
+				 * Foreign key: ID of TagType
+				 */
 				public final class TagTypeId {
 					public static final int NUMBER = 5;
 					public static final String NAME = "tagTypeId";
 				}
 			}
 
-			/** Additional constants for table of TagTypes, base definition, see BikeHistEntity*/
+			/**
+			 * Additional constants for table of TagTypes, base definition, see BikeHistEntity
+			 */
 			public final class TagType extends BikeHistEntity {
-				/** Name of the table */
+				/**
+				 * Name of the table
+				 */
 				public static final String NAME = "tagTypes";
 			}
 
-			/** Additional constants for table of Bikes, base definition, see BikeHistEntity*/
+			/**
+			 * Additional constants for table of Bikes, base definition, see BikeHistEntity
+			 */
 			public final class Bike extends BikeHistEntity {
-				/** Name of the table */
+				/**
+				 * Name of the table
+				 */
 				public static final String NAME = "bikes";
 
-				/** String with the frame number*/
+				/**
+				 * String with the frame number
+				 */
 				public final class FrameNumber {
 					public static final int NUMBER = 5;
 					public static final String NAME = "frameNumber";
 				}
 			}
 
-			/** Additional constants for table of Events, base definition, see BikeHistEntity*/
+			/**
+			 * Additional constants for table of Events, base definition, see BikeHistEntity
+			 */
 			public final class Event extends BikeHistEntity {
-				/** Name of the table */
+				/**
+				 * Name of the table
+				 */
 				public static final String NAME = "events";
 
-				/** Long with the distance in meters*/
+				/**
+				 * Long with the distance in meters
+				 */
 				public final class Distance {
 					public static final int NUMBER = 5;
 					public static final String NAME = "distance";
 				}
 
-				/** Foreign key: ID of Bike*/
-				public final class  BikeId{
+				/**
+				 * Foreign key: ID of Bike
+				 */
+				public final class BikeId {
 					public static final int NUMBER = 6;
 					public static final String NAME = "bikeId";
 				}
-				/** Foreign key: ID of Tag*/
-				public final class  TagId{
+
+				/**
+				 * Foreign key: ID of Tag
+				 */
+				public final class TagId {
 					public static final int NUMBER = 7;
 					public static final String NAME = "tagId";
 				}
 
 				@Deprecated
-				public final class  GeoLongitude{
+				public final class GeoLongitude {
 					public static final int NUMBER = 8;
 					public static final String NAME = "geoLongitude";
 				}
 
 				@Deprecated
-				public final class  GeoLatitude{
+				public final class GeoLatitude {
 					public static final int NUMBER = 9;
 					public static final String NAME = "geoLatitude";
 				}
 
 				@Deprecated
-				public final class  GeoAltitude{
+				public final class GeoAltitude {
 					public static final int NUMBER = 10;
 					public static final String NAME = "geoAltitude";
 				}
 
-				/** Long with system time of the event*/
-				public final class  Timestamp{
+				/**
+				 * Long with system time of the event
+				 */
+				public final class Timestamp {
 					public static final int NUMBER = 11;
 					public static final String NAME = "timestamp";
 				}
 
-				/** Transient field: Long the differnce of the distance*/
-				public final class  DiffDistance{
+				/**
+				 * Transient field: Long the differnce of the distance
+				 */
+				public final class DiffDistance {
 					public static final int NUMBER = 12;
 					public static final String NAME = "diffDistance";
 				}
 
-				/** Transient field: Long the differnce of the timestamp*/
-				public final class  DiffTimestamp{
+				/**
+				 * Transient field: Long the differnce of the timestamp
+				 */
+				public final class DiffTimestamp {
 					public static final int NUMBER = 13;
 					public static final String NAME = "diffTimestamp";
 				}

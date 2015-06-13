@@ -37,13 +37,12 @@ import de.egh.bikehist.ui.event.EventListFragment;
 import de.egh.bikehist.ui.masterdata.AdministratorActivity;
 
 /**
- * TODO Differenz wird am falschen Objekt platziert
- * TODO Gelöschte Einträge halten, Flag
- * TODO Synchronisation
- * TODO Refresh baut Fragment neu auf; Erestzung durch Selektion
+ * TODO Synchronisation fehlt
+ * TODO Master Data: Manchmal fehlt der +-Knopf nach Detail-Rücksprung (?)
  */
 
-public class MainActivity extends ActionBarActivity implements ListCallbacks, EventDetailFragment.Callbacks {
+public class MainActivity extends ActionBarActivity implements ListCallbacks,
+		EventDetailFragment.Callbacks, DrawerController.Callbacks {
 
 
 	public static final String EVENT_DETAIL_FRAGMENT_TAG = "eventDetailFragment";
@@ -64,6 +63,10 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks, Ev
 	 * device.
 	 */
 	private boolean mTwoPane;
+
+	/**
+	 * True, if in drawer mode (mDrawerLayout!=null) and drawer visible
+	 */
 	private boolean drawerOpen = false;
 	private DrawerLayout mDrawerLayout;
 
@@ -83,37 +86,37 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks, Ev
 	@Override
 	public void onItemSelected(UUID id, String type) {
 
-		if (mTwoPane) {
-			// In two-pane mode, show the detail view in this activity by
-			// adding or replacing the detail fragment using a
-			// fragment transaction.
-			EventDetailFragment fragment = new EventDetailFragment();
-
-			Bundle arguments = new Bundle();
-			if (id != null) {
-				arguments.putString(EventContract.EVENT_ID, id.toString());
-			} else {
-				arguments.putString(EventContract.BIKE_ID, drawerController.getSelectedBike().getId().toString());
-				arguments.putString(EventContract.TAG_TYPE_ID, drawerController.getSelectedTagType().getId().toString());
-			}
-			fragment.setArguments(arguments);
-			getSupportFragmentManager().beginTransaction()
-					.replace(R.id.mainDetailContainer, fragment, EVENT_DETAIL_FRAGMENT_TAG)
-					.commit();
-
+//		if (mTwoPane) {
+//			// In two-pane mode, show the detail view in this activity by
+//			// adding or replacing the detail fragment using a
+//			// fragment transaction.
+//			EventDetailFragment fragment = new EventDetailFragment();
+//
+//			Bundle arguments = new Bundle();
+//			if (id != null) {
+//				arguments.putString(EventContract.EVENT_ID, id.toString());
+//			} else {
+//				arguments.putString(EventContract.BIKE_ID, drawerController.getSelectedBike().getId().toString());
+//				arguments.putString(EventContract.TAG_TYPE_ID, drawerController.getSelectedTagType().getId().toString());
+//			}
+//			fragment.setArguments(arguments);
+//			getSupportFragmentManager().beginTransaction()
+//					.replace(R.id.mainDetailContainer, fragment, EVENT_DETAIL_FRAGMENT_TAG)
+//					.commit();
+//
+//		} else {
+		// In single-pane mode, simply start the detail activity
+		// for the selected event_item EVENT_ID.
+		Intent detailIntent = new Intent(this, EventDetailActivity.class);
+		if (id != null) {
+			detailIntent.putExtra(EventContract.EVENT_ID, id.toString());
 		} else {
-			// In single-pane mode, simply start the detail activity
-			// for the selected event_item EVENT_ID.
-			Intent detailIntent = new Intent(this, EventDetailActivity.class);
-			if (id != null) {
-				detailIntent.putExtra(EventContract.EVENT_ID, id.toString());
-			} else {
-				detailIntent.putExtra(EventContract.BIKE_ID, drawerController.getSelectedBike().getId().toString());
-				detailIntent.putExtra(EventContract.TAG_TYPE_ID, drawerController.getSelectedTagType().getId().toString());
-			}
-
-			startActivity(detailIntent);
+			detailIntent.putExtra(EventContract.BIKE_ID, drawerController.getSelectedBike().getId().toString());
+			detailIntent.putExtra(EventContract.TAG_TYPE_ID, drawerController.getSelectedTagType().getId().toString());
 		}
+
+		startActivity(detailIntent);
+//		}
 	}
 
 	/**
@@ -228,11 +231,12 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks, Ev
 
 		setContentView(R.layout.main);
 
+		mDrawerLayout = (DrawerLayout) findViewById(R.id.mainDrawerLayoutWidget);
+
 		drawerController = new DrawerController(this, (ListView) findViewById(R.id.drawerBikeList),
 				(ListView) findViewById(R.id.drawerTagTypeList),
-				(ListView) findViewById(R.id.drawerTagList));
+				(ListView) findViewById(R.id.drawerTagList), this);
 
-		mDrawerLayout = (DrawerLayout) findViewById(R.id.mainDrawerLayoutWidget);
 
 		//landscape has no android.support.v4.widget.DrawerLayout
 		if (mDrawerLayout != null) {
@@ -250,7 +254,7 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks, Ev
 					Log.d(TAG, "onDrawerClosed");
 					super.onDrawerClosed(view);
 					invalidateOptionsMenu();
-					showEventList();
+//					showEventList();
 
 					drawerOpen = false;
 
@@ -271,19 +275,19 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks, Ev
 			mDrawerLayout.setDrawerListener(mDrawerToggle);
 		}
 
-
-		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-		getSupportActionBar().setHomeButtonEnabled(true);
-
-		if (findViewById(R.id.mainDetailContainer) != null) {
-			// The detail container view will be present only in the
-			// large-screen layouts (res/values-large and
-			// res/values-sw600dp). If this view is present, then the
-			// activity should be in two-pane mode.
-			mTwoPane = true;
-
-
+		if (mDrawerLayout != null) {
+			getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+			getSupportActionBar().setHomeButtonEnabled(true);
 		}
+//		if (findViewById(R.id.mainDetailContainer) != null) {
+//			// The detail container view will be present only in the
+//			// large-screen layouts (res/values-large and
+//			// res/values-sw600dp). If this view is present, then the
+//			// activity should be in two-pane mode.
+//			mTwoPane = true;
+//
+//
+//		}
 
 	}
 
@@ -293,7 +297,12 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks, Ev
 
 		drawerOpen = getSharedPreferences(AppUtils.Prefs.PREF_NAME, 0).getBoolean(Constants.Prefs.KEY_DRAWER_OPEN, false);
 		drawerController.onChange();
+
+		if(drawerOpen && mDrawerLayout!=null)
+			mDrawerLayout.openDrawer(Gravity.LEFT);
+
 		showEventList();
+
 	}
 
 	@Override
@@ -346,20 +355,17 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks, Ev
 //		boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawer);
 		EntityLoader el = new EntityLoader(this);
 
-		boolean enableActionCreateEvent = !drawerOpen && hasSelection() &&
+		boolean enableActionCreateEvent = (!drawerOpen || mDrawerLayout == null) && hasSelection() &&
 				el.tags(drawerController.getSelectedTagType()).size() > 0;
 
 		menu.findItem(R.id.actionCreateEvent).setEnabled(enableActionCreateEvent);
 		menu.findItem(R.id.actionCreateEvent).setVisible(enableActionCreateEvent);
 
-		menu.findItem(R.id.actionConfiguration).setEnabled(!drawerOpen);
-		menu.findItem(R.id.actionConfiguration).setVisible(!drawerOpen);
+		menu.findItem(R.id.actionConfiguration).setEnabled(!drawerOpen || mDrawerLayout == null);
+		menu.findItem(R.id.actionConfiguration).setVisible(!drawerOpen || mDrawerLayout == null);
 
-		menu.findItem(R.id.actionSync).setEnabled(!drawerOpen);
-		menu.findItem(R.id.actionSync).setVisible(!drawerOpen);
-
-		menu.findItem(R.id.actionRefresh).setEnabled(drawerOpen);
-		menu.findItem(R.id.actionRefresh).setVisible(drawerOpen);
+		menu.findItem(R.id.actionSync).setEnabled(!drawerOpen || mDrawerLayout == null);
+		menu.findItem(R.id.actionSync).setVisible(!drawerOpen || mDrawerLayout == null);
 
 
 		return super.onPrepareOptionsMenu(menu);
@@ -425,12 +431,7 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks, Ev
 			case R.id.actionCreateEvent:
 				onItemSelected(null, null);
 				return true;
-			case R.id.actionRefresh:
-				if (mDrawerLayout != null) {
-					mDrawerLayout.closeDrawer(Gravity.START);
-				}
-				showEventList();
-				return true;
+
 			case R.id.actionSync:
 				callSync();
 				return true;
@@ -466,14 +467,19 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks, Ev
 	}
 
 	@Override
-	public void onChanged() {
+	public void onEventChanged() {
 		((EventListFragment) getSupportFragmentManager().findFragmentByTag(EVENT_LIST_FRAGMENT_TAG)).refresh();
 
-		FragmentManager fragmentManager = getSupportFragmentManager();
-		Fragment fragment = fragmentManager.findFragmentByTag(EVENT_DETAIL_FRAGMENT_TAG);
-		fragmentManager.beginTransaction()
-				.remove(fragment)
-				.commit();
+//		FragmentManager fragmentManager = getSupportFragmentManager();
+//		Fragment fragment = fragmentManager.findFragmentByTag(EVENT_DETAIL_FRAGMENT_TAG);
+//		fragmentManager.beginTransaction()
+//				.remove(fragment)
+//				.commit();
+	}
+
+	@Override
+	public void onDrawerControllerSelectionChanged() {
+		showEventList();
 	}
 
 	private static class Constants {

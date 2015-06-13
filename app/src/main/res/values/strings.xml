@@ -85,4 +85,9 @@
     <string name="administration">Settings</string>
     <string name="actionSynchronize">Synchronize</string>
     <string name="actionRefresh">actionRefresh</string>
+    <string name="messageMissingSyncDirectory">"Missing sync directory"</string>
+    <string name="messageCantWriteFile">"Can't write file %1$s"</string>
+    <string name="messageCantCreateFile">"Can't create file %1$s"</string>
+    <string name="messageCantDeleteFile">"Can't delete file %1$s"</string>
+
 </resources>
