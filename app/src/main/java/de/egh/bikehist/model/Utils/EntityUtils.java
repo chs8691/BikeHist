@@ -16,8 +16,6 @@ public interface EntityUtils<T> {
 	/** URI from BikeHistProvider.CONTENT_URI_ */
 	public Uri getContentUri();
 
-	public String toExport(T entity);
-
 	/**
 	 Create new entity for the actual data set in the cursor. Cursor must point to an entity of this
 	 type.
@@ -28,5 +26,9 @@ public interface EntityUtils<T> {
 
 	/** Tag builder for SQL inserts. */
 	public ContentValues build(T entity);
+
+	/** No deep check. Returns true, if the Entity has proper data, for instance a valid ID etc.
+	 * Doesn't check foreign key associations.*/
+	public boolean isValid(T entity);
 }
 

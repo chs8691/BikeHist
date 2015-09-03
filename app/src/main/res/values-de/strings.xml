@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">BikeHist</string>
-    <string name="actionBikes">Fahrräder</string>
-    <string name="actionTagTypes">Tagtypen</string>
-    <string name="actionTags">Tags</string>
     <string name="action_settings">Einstellungen</string>
     <string name="bikeNameBike1">Mein Rad</string>
     <string name="cancel">Abbruch</string>
@@ -16,8 +13,8 @@
     <string name="emptyList">Leere Liste</string>
     <string name="messageDeleteBikeSuccess">%1$d Fahrräder mit %2$d Ereignissen gelöscht.</string>
     <string name="messageDeleteError">Löschen fehlgeschlagen !</string>
-    <string name="messageDeleteEventSuccess">%1d Ereignisse gelöscht.</string>
-    <string name="messageDeleteTagTypesSuccess">%1$d Tagtypen gelöscht.</string>
+    <string name="messageDeleteEventSuccess">Gelöschte Ereignisse: %1d.</string>
+    <string name="messageDeleteTagTypesSuccess">Gelöschte TagTypen: %1$d.</string>
     <string name="messageNameMissing">Name fehlt.</string>
     <string name="tagNameChain">Kette</string>
     <string name="tagNameNewYear">Neujahr</string>
@@ -53,17 +50,34 @@
     <string name="actionCreateEvent">Ereignis anlegen</string>
     <string name="actionDelete">Löschen</string>
     <string name="labelBikeName">Name des Fahrrades</string>
-    <string name="messageDeleteTagsSuccess">%1$d Tags gelöscht.</string>
-    <string name="actionRefresh">Aktualisieren</string>
+    <string name="messageDeleteTagsSuccess">Gelöschte Tags: %1$d.</string>
     <string name="actionSynchronize">Synchronisieren</string>
     <string name="action_configuration">Konfiguration</string>
-    <string name="administration">Administration</string>
-    <string name="bike">Fahrrad</string>
-    <string name="directoryPickerButton">Ordern übernehmen</string>
-    <string name="directoryPickerTitle">Ordner selektieren</string>
-    <string name="event">Ereignis</string>
-    <string name="events">Ereignisse</string>
-    <string name="messageExternalStorageNotWritable">Externer Speicher nicht beschreibbar</string>
-    <string name="tag">Tag</string>
-    <string name="tagType">Tagtyp</string>
+    <string name="administration">Konfiguration</string>
+    <string name="buttonCancel">Schließen</string>
+    <string name="buttonImport">Import</string>
+    <string name="importDialogFileNameDefaultValue">Datei auswählen…</string>
+    <string name="importDialogMessageReading">Lese Datei…</string>
+    <string name="importDialogMessageReadingFailed">Daten konnte nicht gelesen werden, falsches Dateiformat?</string>
+    <string name="importDialogMessageReadingOk">Datei ausgelesen. Vorsicht: Mit \'Import\' werden alle vorhanden Datensätze überschrieben!</string>
+    <string name="importDialogMessageValueDefault">Bitte zurst die Importfdatei angeben.</string>
+    <string name="importDialogMessageWriteOk">Import erfolgreich. Der Dialog kann nun geschlossen werden.</string>
+    <string name="importDialogMessageWritingFailed">Import fehlgeschlagen! Interne Daten konnten nicht aktualisiert werden.</string>
+    <string name="importDialogMessageWrting">Schreibe…</string>
+    <string name="messageCantCreateFile">Kann Datei %1$s nicht erzeugen</string>
+    <string name="messageCantDeleteFile">Kann Datei %1$s nicht löschen</string>
+    <string name="messageCantWriteFile">Kann Datei %1$s nicht schreiben</string>
+    <string name="messageMissingSyncDirectory">Verzeichnis für Synchronisation fehlt!</string>
+    <string name="titleExportFunctionName">Export</string>
+    <string name="titleImportDialog">Import</string>
+    <string name="titleSyncFunctionName">Synchronisation</string>
+    <string name="titleSyncNotification">Synchronisiere BikeHist</string>
+    <string name="importDialogBikesLabel">Fahrräder</string>
+    <string name="importDialogEventsLabel">Ereignisse</string>
+    <string name="importDialogFileNameDefault">Dateiname</string>
+    <string name="importDialogTagTypesLabel">Tagtypen</string>
+    <string name="importDialogTagsLabel">Tags</string>
+    <string name="actionHelp">Hilfe</string>
+    <string name="title_activity_help">BikeHist Hilfe</string>
+    <string name="resourceHelpFile">help_de.html</string>
 </resources>

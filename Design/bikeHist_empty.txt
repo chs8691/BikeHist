@@ -1,0 +1,11 @@
+{
+ "timestamp": 9999999999999,
+ "bikes": [
+ ],
+ "tagTypes": [
+ ],
+ "tags": [
+ ],
+ "events": [
+ ]
+}

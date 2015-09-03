@@ -1,0 +1,80 @@
+{
+ "timestamp": 1436543953526,
+ "bikes": [
+  {
+   "id": "d7db813f-e049-4cb6-b56a-ad92ac4d9042",
+   "name": "Mein Rad",
+   "touchedAt": 1436507032888,
+   "frameNumber": "GERMANIA-448010"
+  },
+  {
+   "id": "780c1741-cc66-4654-92cb-06bf2877f07e",
+   "name": "x",
+   "touchedAt": 1435659425471,
+   "frameNumber": "x.x6"
+  }
+ ],
+ "tagTypes": [
+  {
+   "id": "d2cb2cc9-1aa4-4f62-97e9-ea55f0a4ad9f",
+   "name": "Wartung",
+   "touchedAt": 1436507032903
+  },
+  {
+   "id": "8a8a1647-7bef-45fd-b92e-d7ae72536a06",
+   "name": "Zeitereignis",
+   "touchedAt": 1436507032923
+  },
+  {
+   "id": "df10a854-3858-4fe8-b720-74f0a00abf43",
+   "name": "Zeitereignis 2",
+   "touchedAt": 1435659687112
+  },
+  {
+   "id": "a2aa983f-33aa-4842-b59f-95b8e791209a",
+   "name": "tt1",
+   "touchedAt": 1435739570771
+  }
+ ],
+ "tags": [
+  {
+   "id": "4c5804ce-b256-46cb-baab-542161b643db",
+   "name": "Kette",
+   "touchedAt": 1436507032936,
+   "tagTypeId": "d2cb2cc9-1aa4-4f62-97e9-ea55f0a4ad9f"
+  },
+  {
+   "id": "432ae1bf-5b27-4f18-906e-96297f1feb86",
+   "name": "Mantel 7",
+   "touchedAt": 1436509913674,
+   "tagTypeId": "d2cb2cc9-1aa4-4f62-97e9-ea55f0a4ad9f"
+  },
+  {
+   "id": "432ae1bf-5b27-4f18-906e-96297f1feb87",
+   "name": "tag zz2",
+   "touchedAt": 1436509070881,
+   "tagTypeId": "df10a854-3858-4fe8-b720-74f0a00abf43"
+  }
+ ],
+ "events": [
+  {
+   "id": "738ece06-e9e5-464d-aac9-b9baf31eec32",
+   "name": "ex1",
+   "touchedAt": 1436543953526,
+   "bikeId": "d7db813f-e049-4cb6-b56a-ad92ac4d9042",
+   "distance": 1,
+   "tagId": "4c5804ce-b256-46cb-baab-542161b643db",
+   "timestamp": 1436507047520
+  },
+    {
+   "id": "738ece06-e9e5-464d-aac9-b9baf31eec33",
+   "name": "ex2",
+   "touchedAt": 1436543953526,
+   "bikeId": "d7db813f-e049-4cb6-b56a-ad92ac4d9042",
+   "distance": 2000,
+   "tagId": "4c5804ce-b256-46cb-baab-542161b643db",
+   "timestamp": 1436543853526
+  }
+
+ ]
+}

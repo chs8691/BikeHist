@@ -7,17 +7,16 @@
     <string name="drawerClose">Close</string>
     <string name="DistanceUnit" translatable="false">KM</string>
     <string name="empty" translatable="false">empty</string>
-    <string name="actionBikes">Bikes</string>
     <string name="dialogBikeDeleteQuestion">Delete bike and all its events?</string>
     <string name="dialogEventDeleteQuestion">Delete this event?</string>
     <string name="dialogTagTypeDeleteQuestion">Delete tag type?</string>
     <string name="dialogTagDeleteQuestion">Delete tag?</string>
     <string name="ok" translatable="false">OK</string>
     <string name="cancel">Cancel</string>
-    <string name="messageDeleteEventSuccess">Deleted %1d events.</string>
-    <string name="messageDeleteBikeSuccess">Deleted %1$d bike with %2$d events.</string>
-    <string name="messageDeleteTagTypesSuccess">Deleted %1$d tag types.</string>
-    <string name="messageDeleteTagsSuccess">Deleted %1$d tags.</string>
+    <string name="messageDeleteEventSuccess">Deleted events: %1d events.</string>
+    <string name="messageDeleteBikeSuccess">Deleted bikes: %1$d, with events: %2$d.</string>
+    <string name="messageDeleteTagTypesSuccess">Deleted tag types: %1$d.</string>
+    <string name="messageDeleteTagsSuccess">Deleted tags %1$d.</string>
     <string name="messageDeleteError">Deleting failed !</string>
     <string name="titleEditTag">Edit Tag</string>
     <string name="titleEditTagType">Edit Tag Type</string>
@@ -31,16 +30,10 @@
     <string name="entityNamePluralBikes" translatable="false">Bikes</string>
     <string name="entityNamePluralTagTypes" translatable="false">TagTypes</string>
     <string name="entityNamePluralTags" translatable="false">Tags</string>
-    <string name="events">Events</string>
-    <string name="event">Event</string>
     <string name="bikes">Bikes</string>
-    <string name="bike">Bike</string>
-    <string name="tag">Tag</string>
-    <string name="tagType">Tag Type</string>
+
     <string name="tags">Tags</string>
     <string name="tagTypes">Tag Types</string>
-    <string name="actionTags">Tags</string>
-    <string name="actionTagTypes">Tag Types</string>
     <string name="titleEvent">Event</string>
     <string name="messageNameMissing">Name missing.</string>
     <string name="messageEmptyTagType" translatable="false">"Tag Type %1$s has no Tags. Please create Tags first."</string>
@@ -78,16 +71,41 @@
     <string name="actionDelete">Delete</string>
     <string name="actionCreateEvent">Create Event</string>
     <string name="actionCreate">New</string>
-    <string name="directoryPickerTitle">Please select a folder</string>
-    <string name="directoryPickerButton">Use this folder</string>
-    <string name="messageExternalStorageNotWritable">External Storage not writable</string>
     <string name="action_configuration">Configuration</string>
-    <string name="administration">Settings</string>
+    <string name="administration">Configuration</string>
     <string name="actionSynchronize">Synchronize</string>
-    <string name="actionRefresh">actionRefresh</string>
     <string name="messageMissingSyncDirectory">"Missing sync directory"</string>
     <string name="messageCantWriteFile">"Can't write file %1$s"</string>
     <string name="messageCantCreateFile">"Can't create file %1$s"</string>
     <string name="messageCantDeleteFile">"Can't delete file %1$s"</string>
+    <string name="titleSyncNotification">Syncing BikeHist</string>
+    <string name="titleSyncFunctionName">Synchronize</string>
+    <string name="titleExportFunctionName">Export</string>
+    <string name="importDialogFileNameDefaultValue">click here to choose a file</string>
+    <string name="importDialogMessageReading">Reading import file…</string>
+    <string name="importDialogMessageReadingOk">Reading successful! Be careful: by pressing \'Import\', all existing data will be replaced by the imported ones! It\'s a good idea, first to export your data before you import a foreign file.</string>
+    <string name="importDialogMessageReadingFailed">Reading failed! Check file for correctness.</string>
+    <string name="importDialogMessageWriteOk">Import finished successful. You can close the dialog now. </string>
+    <string name="importDialogMessageWritingFailed">Import failed! Database could not be updated. </string>
+    <string name="buttonImport">Import</string>
+    <string name="buttonCancel">Close</string>
+    <string name="titleImportDialog">Import</string>
+    <string name="importDialogMessageValueDefault">First, pick a file with BikeHist data.</string>
+    <string name="importDialogMessageWrting">Writing…</string>
+    <string name="importDialogFileNameDefault">File Name</string>
+    <string name="importDialogStatusDefault" translatable="false">---</string>
+    <string name="importDialogBikesLabel">Bikes</string>
+    <string name="importDialogDefaultBikesDefault" translatable="false">0</string>
+    <string name="importDialogTagTypesLabel">TagTypes</string>
+    <string name="importDialogTagTypesDefault" translatable="false">00</string>
+    <string name="importDialogTagsLabel">Tags</string>
+    <string name="importDialogTagsDefault" translatable="false">000</string>
+    <string name="importDialogEventsLabel">Events</string>
+    <string name="importDialogEventsDefault" translatable="false">0000</string>
+    <string name="importDialogMessageDefault" translatable="false">---</string>
+    <string name="actionHelp">Help</string>
+    <string name="title_activity_help">BikeHist Help</string>
+    <string name="resourceHelpFile">help.html</string>
+    <string name="titleImportFunctionName">Import</string>
 
 </resources>

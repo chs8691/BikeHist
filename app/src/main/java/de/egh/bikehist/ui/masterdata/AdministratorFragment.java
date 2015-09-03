@@ -59,7 +59,7 @@ public class AdministratorFragment extends Fragment {
         setCallbacks(null);
     }
 
-    public static final String TAG = AdministratorFragment.class.getSimpleName();
+    private static final String TAG = AdministratorFragment.class.getSimpleName();
     static final String LOG_TAG = "SlidingTabsBasicFragment";
     private Callbacks callbacks = sDummyCallbacks;
 
@@ -88,7 +88,7 @@ public class AdministratorFragment extends Fragment {
      */
     private SamplePagerAdapter pageAdapter;
 
-    public void setCallbacks(Callbacks callbacks) {
+    private void setCallbacks(Callbacks callbacks) {
         if (callbacks != null)
             this.callbacks = callbacks;
         else
@@ -149,7 +149,7 @@ public class AdministratorFragment extends Fragment {
         mSlidingTabLayout.setCallbacks(new SlidingTabLayout.Callbacks() {
             @Override
             public void onPageSet(int position) {
-                Log.v(TAG, "onPageSet");
+//                Log.v(TAG, "onPageSet");
                 callbacks.tabChanged();
             }
         });

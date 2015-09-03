@@ -40,7 +40,7 @@ public class DrawerController {
 	private final Bikes bikes = new Bikes();
 	//Don't kill this instance
 	private final TagTypes tagTypes = new TagTypes();
-	private Callbacks callbacks;
+	private final Callbacks callbacks;
 
 	public DrawerController(Context context, ListView drawerBikeList, ListView drawerTagTypeList,
 	                        ListView drawerTagList, Callbacks callbacks) {
@@ -71,7 +71,7 @@ public class DrawerController {
 		onChange();
 	}
 
-	public void setListViewHeightBasedOnChildren(ListView listView) {
+	private void setListViewHeightBasedOnChildren(ListView listView) {
 		ArrayAdapter listAdapter = (ArrayAdapter) listView.getAdapter();
 		if (listAdapter == null) {
 			// pre-condition
@@ -245,7 +245,7 @@ public class DrawerController {
 		//--- TagTypes: Return all the saved data ---//
 		tagTypes.clear();
 		Cursor c = cr.query(
-				BikeHistProvider.CONTENT_URI_TAG_TYPES,
+				BikeHistProvider.BikeHistContract.Tables.TagType.URI,
 				null,
 				BikeHistProvider.BikeHistContract.Tables.BikeHistEntity.Deleted.NAME + "=?",
 				new String[]{BikeHistProvider.BikeHistContract.Boolean.False.asString},
@@ -259,8 +259,9 @@ public class DrawerController {
 		}
 
 
+
 		//--- Tags: Return all the saved data ---//
-		c = cr.query(BikeHistProvider.CONTENT_URI_TAGS,
+		c = cr.query(BikeHistProvider.BikeHistContract.Tables.Tag.URI,
 				null,
 				BikeHistProvider.BikeHistContract.Tables.BikeHistEntity.Deleted.NAME + "=?",
 				new String[]{BikeHistProvider.BikeHistContract.Boolean.False.asString},
@@ -274,7 +275,7 @@ public class DrawerController {
 
 		//--- Bikes: Return all the saved data ---//
 		bikes.clear();
-		c = cr.query(BikeHistProvider.CONTENT_URI_BIKES,
+		c = cr.query(BikeHistProvider.BikeHistContract.Tables.Bike.URI,
 				null,
 				BikeHistProvider.BikeHistContract.Tables.BikeHistEntity.Deleted.NAME + "=?",
 				new String[]{BikeHistProvider.BikeHistContract.Boolean.False.asString},
@@ -379,6 +380,7 @@ public class DrawerController {
 
 		public void clear() {
 			tagTypeItems.clear();
+			actualTagItems.clear();
 		}
 
 		/**
@@ -642,7 +644,7 @@ public class DrawerController {
 	}
 
 	/**
-	 * An entry in the shown list of bikes
+	 * An entry in the shown list of bikeList
 	 */
 	class BikeItem {
 		private final Bike bike;

@@ -42,7 +42,7 @@ class BikeListItemAdapter extends ArrayAdapter<DrawerController.BikeItem> {
 			itemView = (LinearLayout) convertView;
 		}
 
-		Log.d(TAG, "getView for " + item.getBike().getName());
+//		Log.d(TAG, "getView for " + item.getBike().getName());
 		TextView line = (TextView) itemView.findViewById(R.id.drawerTagTypeName);
 		line.setText(item.getBike().getName());
 

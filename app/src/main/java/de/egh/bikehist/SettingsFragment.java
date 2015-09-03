@@ -13,7 +13,7 @@ import android.view.View;
  */
 public class SettingsFragment extends PreferenceFragment {
 	static final int PICKFILE_RESULT_CODE = 1;
-	SharedPreferences prefs;
+	private SharedPreferences prefs;
 	private Preference connectionPref;
 
 	@Override
@@ -21,7 +21,7 @@ public class SettingsFragment extends PreferenceFragment {
 		super.onCreate(savedInstanceState);
 		prefs = getActivity().getSharedPreferences(AppUtils.Prefs.PREF_NAME, 0);
 		// Load the preferences from an XML resource
-		addPreferencesFromResource(R.xml.preferences);
+//		addPreferencesFromResource(R.xml.preferences);
 
 //		((Preference) findPreference(AppUtils.Prefs.PREF_EXPORT_DIRECTORY_KEY))
 //				.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -44,15 +44,6 @@ public class SettingsFragment extends PreferenceFragment {
 //						return false;
 //					}
 //				});
-
-	}
-
-	@Override
-	public void onViewCreated(View view, Bundle savedInstanceState) {
-		super.onViewCreated(view, savedInstanceState);
-
-//		connectionPref = findPreference(AppUtils.Prefs.PREF_EXPORT_DIRECTORY_KEY);
-//		connectionPref.setSummary(prefs.getString(AppUtils.Prefs.PREF_EXPORT_DIRECTORY_KEY, getActivity().getExternalFilesDir(null).getAbsolutePath()));
 
 	}
 

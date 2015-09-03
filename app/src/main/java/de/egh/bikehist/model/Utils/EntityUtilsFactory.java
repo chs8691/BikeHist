@@ -11,7 +11,6 @@ import java.util.UUID;
 import de.egh.bikehist.R;
 import de.egh.bikehist.model.Bike;
 import de.egh.bikehist.model.Event;
-import de.egh.bikehist.model.GeoLocation;
 import de.egh.bikehist.model.Tag;
 import de.egh.bikehist.model.TagType;
 import de.egh.bikehist.persistance.BikeHistProvider;
@@ -75,7 +74,7 @@ public class EntityUtilsFactory {
 
 	private static class BikeUtils implements EntityUtils<Bike> {
 
-		private Context context;
+		private final Context context;
 
 		BikeUtils(Context context) {
 
@@ -89,17 +88,9 @@ public class EntityUtilsFactory {
 
 		@Override
 		public Uri getContentUri() {
-			return BikeHistProvider.CONTENT_URI_BIKES;
+			return Tables.Bike.URI;
 		}
 
-		@Override
-		public String toExport(Bike bike) {
-			return bike.getId().toString() + DELI
-					+ EntityUtilsFactory.replaceDelimiter(bike.getName()) + DELI
-					+ bike.getFrameNumber() + DELI
-					+ bike.isDeleted() + DELI
-					+ bike.getTouchedAt();
-		}
 
 		@Override
 		public Bike build(Cursor c) {
@@ -130,11 +121,20 @@ public class EntityUtilsFactory {
 			return values;
 		}
 
+		@Override
+		public boolean isValid(Bike entity) {
+			return
+					entity.getId() != null
+							&& entity.getName() != null
+							&& !entity.getName().isEmpty()
+							&& entity.getFrameNumber() != null;
+		}
+
 	}
 
 	private static class TagTypeUtils implements EntityUtils<TagType> {
 
-		private Context context;
+		private final Context context;
 
 		TagTypeUtils(Context context) {
 
@@ -149,16 +149,9 @@ public class EntityUtilsFactory {
 
 		@Override
 		public Uri getContentUri() {
-			return BikeHistProvider.CONTENT_URI_TAG_TYPES;
+			return Tables.TagType.URI;
 		}
 
-		@Override
-		public String toExport(TagType tagType) {
-			return tagType.getId().toString() + DELI
-					+ replaceDelimiter(tagType.getName()) + DELI
-					+ tagType.isDeleted() + DELI
-					+ tagType.getTouchedAt();
-		}
 
 		@Override
 		public TagType build(Cursor c) {
@@ -187,11 +180,19 @@ public class EntityUtilsFactory {
 			return values;
 		}
 
+		@Override
+		public boolean isValid(TagType entity) {
+			return
+					entity.getId() != null
+							&& entity.getName() != null
+							&& !entity.getName().isEmpty();
+		}
+
 	}
 
 	private static class TagUtils implements EntityUtils<Tag> {
 
-		private Context context;
+		private final Context context;
 
 		TagUtils(Context context) {
 
@@ -206,17 +207,9 @@ public class EntityUtilsFactory {
 
 		@Override
 		public Uri getContentUri() {
-			return BikeHistProvider.CONTENT_URI_TAGS;
+			return Tables.Tag.URI;
 		}
 
-		@Override
-		public String toExport(Tag tag) {
-			return tag.getId().toString() + DELI
-					+ replaceDelimiter(tag.getName()) + DELI
-					+ tag.getTagTypeId().toString()
-					+ tag.isDeleted() + DELI
-					+ tag.getTouchedAt();
-		}
 
 		@Override
 		public Tag build(Cursor c) {
@@ -246,11 +239,19 @@ public class EntityUtilsFactory {
 			return values;
 		}
 
+		@Override
+		public boolean isValid(Tag entity) {
+			return entity.getId() != null
+					&& entity.getName() != null
+					&& !entity.getName().isEmpty()
+					&& entity.getTagTypeId() != null;
+		}
+
 	}
 
 	private static class EventUtils implements EntityUtils<Event> {
 
-		private Context context;
+		private final Context context;
 
 		EventUtils(Context context) {
 
@@ -265,22 +266,7 @@ public class EntityUtilsFactory {
 
 		@Override
 		public Uri getContentUri() {
-			return BikeHistProvider.CONTENT_URI_EVENTS;
-		}
-
-		@Override
-		public String toExport(Event event) {
-			return event.getId().toString() + DELI
-					+ replaceDelimiter(event.getName()) + DELI
-					+ event.getBikeId() + DELI
-					+ event.getDistance() + DELI
-					+ event.getGeoLocation().getAltitude() + DELI
-					+ event.getGeoLocation().getLongitude() + DELI
-					+ event.getGeoLocation().getLatitude() + DELI
-					+ event.getTagId() + DELI
-					+ event.getTimestamp() + DELI
-					+ event.isDeleted() + DELI
-					+ event.getTouchedAt();
+			return Tables.Event.URI;
 		}
 
 		@Override
@@ -291,7 +277,7 @@ public class EntityUtilsFactory {
 				return null;
 			}
 
-/**UUID id, String name, long distance, UUID bikeId, UUID tagId, GeoLocation geoLocation,
+/**UUID id, String name, long distance, UUID bikeId, UUID tagId,
  long timestamp, long diffDistance, long diffTimestamp, boolean deleted, long touchedAt*/
 			return new Event(
 					id,
@@ -301,10 +287,6 @@ public class EntityUtilsFactory {
 					c.getLong(Tables.Event.Distance.NUMBER),
 					getUUIDFromString(c.getString(Tables.Event.BikeId.NUMBER)),
 					getUUIDFromString(c.getString(Tables.Event.TagId.NUMBER)),
-					new GeoLocation(c.getDouble(Tables.Event.GeoLongitude.NUMBER),
-							c.getDouble(Tables.Event.GeoLatitude.NUMBER),
-							c.getDouble(Tables.Event.GeoAltitude.NUMBER)
-					),
 					c.getLong(Tables.Event.Timestamp.NUMBER),
 					c.getLong(Tables.Event.DiffDistance.NUMBER),
 					c.getLong(Tables.Event.DiffTimestamp.NUMBER)
@@ -322,15 +304,17 @@ public class EntityUtilsFactory {
 			values.put(Tables.Event.Distance.NAME, event.getDistance());
 			values.put(Tables.Event.BikeId.NAME, event.getBikeId().toString());
 			values.put(Tables.Event.TagId.NAME, event.getTagId().toString());
-			double longitude = event.getGeoLocation().getLongitude();
-			double latitude = event.getGeoLocation().getLatitude();
-			double altitude = event.getGeoLocation().getAltitude();
-			values.put(Tables.Event.GeoLongitude.NAME, longitude);
-			values.put(Tables.Event.GeoLatitude.NAME, latitude);
-			values.put(Tables.Event.GeoAltitude.NAME, altitude);
 			values.put(Tables.Event.Timestamp.NAME, event.getTimestamp());
 
 			return values;
+		}
+
+		@Override
+		public boolean isValid(Event entity) {
+			return entity.getId() != null
+					&& entity.getBikeId() != null
+					&& entity.getTimestamp() > 0
+					&& entity.getTagId() != null;
 		}
 
 	}

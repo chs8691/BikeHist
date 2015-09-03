@@ -46,9 +46,9 @@ public class MasterDataListController {
 		}
 
 	};
-	private Context context;
-	private Class entity;
-	private ListView listView;
+	private final Context context;
+	private final Class entity;
+	private final ListView listView;
 	private ListStrategy strategy;
 	/**
 	 * The fragment's current callback object, which is notified of list event_item
@@ -144,14 +144,14 @@ public class MasterDataListController {
 		 * Master data type
 		 */
 		private final String type;
-		protected LoaderManager loaderManager;
+		final LoaderManager loaderManager;
 		/**
 		 * Cursor loader
 		 */
 		int loaderId;
 
 
-		protected ListStrategy(String type, int loaderId, LoaderManager loaderManager) {
+		ListStrategy(String type, int loaderId, LoaderManager loaderManager) {
 			this.type = type;
 			this.loaderId = loaderId;
 			this.loaderManager = loaderManager;
@@ -243,11 +243,11 @@ public class MasterDataListController {
 			// Returns a new CursorLoader
 			return new CursorLoader(
 					context,   // Parent activity context
-					BikeHistProvider.CONTENT_URI_BIKES,        // Table to query
+					Tables.Bike.URI,        // Table to query
 					null,
 //						new String[]{
 //								BikeHistProvider.BikeHistContract.Tables._ID,
-//								BikeHistProvider.BikeHistContract.Tables.Bike.Columns.Name.NAME,
+//								BikeHistProvider.BikeHistContract.Tables.Bike.Columns.Name.NAME_STRING,
 //								BikeHistProvider.BikeHistContract.Tables.Bike.Columns.Name.FRAME_NUMBER},     // Projection to return / Columns to return
 					Tables.BikeHistEntity.Deleted.NAME + "=?",
 					new String[]{BikeHistProvider.BikeHistContract.Boolean.False.asString},
@@ -314,11 +314,11 @@ public class MasterDataListController {
 		public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 			return new CursorLoader(
 					context,   // Parent activity context
-					BikeHistProvider.CONTENT_URI_TAG_TYPES,        // Table to query
+					Tables.TagType.URI,        // Table to query
 					null, //get all attributes for Utils.Build...
 //						new String[]{
 //								BikeHistProvider.BikeHistContract.Tables._ID,
-//								BikeHistProvider.BikeHistContract.Tables.TagType.Columns.Name.NAME},     // Projection to return / Columns to return
+//								BikeHistProvider.BikeHistContract.Tables.TagType.Columns.Name.NAME_STRING},     // Projection to return / Columns to return
 					Tables.BikeHistEntity.Deleted.NAME + "=?",
 					new String[]{BikeHistProvider.BikeHistContract.Boolean.False.asString},
 					null             // Default sort order
@@ -403,11 +403,11 @@ public class MasterDataListController {
 				case Constants.LoaderId.TAGS:
 					return new CursorLoader(
 							context,   // Parent activity context
-							BikeHistProvider.CONTENT_URI_TAGS,        // Table to query
+							Tables.Tag.URI,        // Table to query
 							null, //get all attributes for Utils.Build...
 //						new String[]{
 //								BikeHistProvider.BikeHistContract.Tables._ID,
-//								BikeHistProvider.BikeHistContract.Tables.Tag.Columns.Name.NAME,
+//								BikeHistProvider.BikeHistContract.Tables.Tag.Columns.Name.NAME_STRING,
 //								BikeHistProvider.BikeHistContract.Tables.Tag.Columns.Name.TAG_TYPE_ID
 //						},     // Projection to return / Columns to return
 							Tables.BikeHistEntity.Deleted.NAME + "=?",
@@ -419,11 +419,11 @@ public class MasterDataListController {
 					// Returns a new CursorLoader
 					return new CursorLoader(
 							context,   // Parent activity context
-							BikeHistProvider.CONTENT_URI_TAG_TYPES,        // Table to query
+							Tables.TagType.URI,        // Table to query
 							null, //get all attributes for Utils.Build...
 //						new String[]{
 //								BikeHistProvider.BikeHistContract.Tables._ID,
-//								BikeHistProvider.BikeHistContract.Tables.TagType.Columns.Name.NAME},     // Projection to return / Columns to return
+//								BikeHistProvider.BikeHistContract.Tables.TagType.Columns.Name.NAME_STRING},     // Projection to return / Columns to return
 							Tables.BikeHistEntity.Deleted.NAME + "=?",
 							new String[]{BikeHistProvider.BikeHistContract.Boolean.False.asString},
 							null             // Default sort order

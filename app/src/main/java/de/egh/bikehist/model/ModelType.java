@@ -5,8 +5,17 @@ import java.util.UUID;
 /**
  Has every Entity.
  */
-interface ModelType {
+public interface ModelType {
 	UUID getId();
 
 	String getName();
+
+	boolean isDeleted();
+
+	void setDeleted(boolean deleted);
+
+	long getTouchedAt();
+
+	void setTouchedAt(long touchedAt);
+
 }

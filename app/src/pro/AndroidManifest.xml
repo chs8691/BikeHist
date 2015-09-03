@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          >
+
+    <application>
+        <!-- Content Provider -->
+        <provider
+            android:name="de.egh.bikehist.persistance.BikeHistProvider"
+            android:authorities="de.egh.bikehist.pro.provider.bikehist"
+            android:exported="false"/>
+
+    </application>
+
+</manifest>

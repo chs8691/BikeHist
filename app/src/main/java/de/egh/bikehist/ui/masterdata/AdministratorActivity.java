@@ -25,6 +25,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -42,11 +43,11 @@ import de.egh.bikehist.ui.masterdata.MasterDataDetailFragment.Callbacks;
  * For devices with displays with a width of 720dp or greater, the sample log is always visible,
  * on other devices it's visibility is controlled by an item on the Action Bar.
  */
-public class AdministratorActivity extends ActionBarActivity implements ListCallbacks, AdministratorFragment.Callbacks, Callbacks {
+public class AdministratorActivity extends AppCompatActivity implements ListCallbacks, AdministratorFragment.Callbacks, Callbacks {
 
 	public static final String TAG = "MainActivity";
-	public static final String ADMINISTRATOR_FRAGMENT = "AdministratorFragment";
-	public static final int DETAILS_REQUEST_CODE = 1;
+	private static final String ADMINISTRATOR_FRAGMENT = "AdministratorFragment";
+	private static final int DETAILS_REQUEST_CODE = 1;
 	private static final String DETAIL_FRAGMENT = "detailFragment";
 
 	/**

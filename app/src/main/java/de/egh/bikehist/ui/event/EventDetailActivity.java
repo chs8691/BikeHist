@@ -1,6 +1,8 @@
 package de.egh.bikehist.ui.event;
 
+import android.annotation.TargetApi;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
@@ -61,6 +63,7 @@ public class EventDetailActivity extends ActionBarActivity implements EventDetai
 		}
 	}
 
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		int id = item.getItemId();

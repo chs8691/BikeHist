@@ -1,18 +1,22 @@
 package de.egh.bikehist;
 
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.util.Log;
-import android.view.Gravity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,6 +32,10 @@ import de.egh.bikehist.model.TagType;
 import de.egh.bikehist.model.Utils.EntityUtilsFactory;
 import de.egh.bikehist.persistance.BikeHistProvider;
 import de.egh.bikehist.persistance.SaveDataService;
+import de.egh.bikehist.sync.SyncController;
+import de.egh.bikehist.ui.EmptyContentFragment;
+import de.egh.bikehist.ui.HelpActivity;
+import de.egh.bikehist.importing.ImportDialog;
 import de.egh.bikehist.ui.ListCallbacks;
 import de.egh.bikehist.ui.drawer.DrawerController;
 import de.egh.bikehist.ui.event.EventContract;
@@ -36,24 +44,26 @@ import de.egh.bikehist.ui.event.EventDetailFragment;
 import de.egh.bikehist.ui.event.EventListFragment;
 import de.egh.bikehist.ui.masterdata.AdministratorActivity;
 
+
 /**
- * TODO Synchronisation fehlt
- * TODO Master Data: Manchmal fehlt der +-Knopf nach Detail-Rücksprung (?)
+ * TODO Backstack from ImportDialog must update Drawer (deleted Tags already visible)
+ * and: BAck navigation in import dialog must cancel SErvice
+ * TODO Synchronisation: Broadcast mit Ergebnis abfangen
+ * TODO Drawer nach Sync von TagTypes nicht aktualisiert
  */
 
-public class MainActivity extends ActionBarActivity implements ListCallbacks,
+public class MainActivity extends AppCompatActivity implements ListCallbacks,
 		EventDetailFragment.Callbacks, DrawerController.Callbacks {
-
-
 	public static final String EVENT_DETAIL_FRAGMENT_TAG = "eventDetailFragment";
-	public static final String EVENT_LIST_FRAGMENT_TAG = "EVENT_LIST_FRAGMENT_TAG";
+	private static final String EVENT_LIST_FRAGMENT_TAG = "EVENT_LIST_FRAGMENT_TAG";
+	private static final String IMPORT_DIALOG_TAG = "dialog";
 	private static final String TAG = MainActivity.class.getSimpleName();
 	private static final String PREF_KEY_INIT_APP = "PREF_KEY_INIT_APP";
+	private static final int READ_REQUEST_CODE = 42;
 	/**
 	 * Is null, if widget.DrawerLayout is null
 	 */
 	private ActionBarDrawerToggle mDrawerToggle;
-
 	/**
 	 * Handles content of drawer an select event
 	 */
@@ -63,28 +73,98 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 	 * device.
 	 */
 	private boolean mTwoPane;
-
 	/**
 	 * True, if in drawer mode (mDrawerLayout!=null) and drawer visible
 	 */
 	private boolean drawerOpen = false;
 	private DrawerLayout mDrawerLayout;
+	private boolean busyService;
+	private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+
+			if (intent.getAction().equals(ImportDialog.BROADCAST_ACTION_DATA_CHANGED)) {
+				refreshUi();
+			} else {
+				if (intent.hasExtra(SaveDataService.Contract.ACTION)) {
+
+					switch (intent.getStringExtra(SaveDataService.Contract.ACTION)) {
+
+						case SaveDataService.Contract.GetStatus.NAME:
+							//Service is busy, if action name was shipped.
+							onServiceStatusUpdate(
+									intent.getStringExtra(SaveDataService.Contract.GetStatus.Result.ACTIVE_ACTION),
+									intent.getStringExtra(SaveDataService.Contract.GetStatus.Result.LAST_ACTION),
+									(SyncController.StatisticReport) intent.getSerializableExtra(SaveDataService.Contract.GetStatus.Result.STATISTIC_REPORT)
+							);
+							break;
+
+						// Sync has finished
+						case SaveDataService.Contract.Sync.NAME:
+						case SaveDataService.Contract.Export.NAME:
+							onServiceStatusUpdate(
+									intent.getStringExtra(SaveDataService.Contract.GetStatus.Result.ACTIVE_ACTION),
+									intent.getStringExtra(SaveDataService.Contract.GetStatus.Result.LAST_ACTION),
+									(SyncController.StatisticReport)
+											intent.getSerializableExtra(SaveDataService.Contract.GetStatus.Result.STATISTIC_REPORT));
+							break;
+					}
+				}
+			}
+		}
+	};
+	private ImportDialog importDialog;
+
+	/**
+	 * To be called, when Service became busy or idle.
+	 *
+	 * @param actionName      String with name of the running action or null, if no action name
+	 *                        was not requested and service returned a result
+	 * @param lastActionName  Can be null
+	 * @param importStatistic Only for import actions, otherwise null
+	 */
+	private void onServiceStatusUpdate(String actionName, String lastActionName,
+	                                   SyncController.StatisticReport importStatistic) {
+
+		//Service finished an action: update activity
+		busyService = !(actionName == null);
+		refreshUi();
 
 
-	@Override
-	protected void onStop() {
-		super.onStop();
-		drawerController.onStop();
 	}
+
+//	private void onImportWriteResult(boolean success) {
+//		importDialog.onImportWriteResult(success);
+//	}
+
+//	/**
+//	 * Handles result of import file reading. *
+//	 */
+//	private void onImportReadResult(boolean success, SyncController.StatisticReport report) {
+//		importDialog.onImportReadResult(success, report);
+//	}
+
+	private void refreshUi() {
+		drawerController.onChange();
+		showEventList();
+		invalidateOptionsMenu();
+
+	}
+
 
 	/**
 	 * Callback method from {@link de.egh.bikehist.ui.ListCallbacks}
 	 * indicating that the event_item with the given EVENT_ID was selected.
+	 * Does nothing, if Service is busy.
 	 *
 	 * @param id Item id or null for new Event
 	 */
 	@Override
 	public void onItemSelected(UUID id, String type) {
+
+		// Do nothing if syncing
+		if (busyService)
+			return;
 
 //		if (mTwoPane) {
 //			// In two-pane mode, show the detail view in this activity by
@@ -129,7 +209,6 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 			return;
 		}
 
-
 		ContentResolver cr = getContentResolver();
 
 		//----Create/add Bikes once ----//
@@ -138,10 +217,13 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 		final String FRAME_NUMBER_BIKE_1 = "GERMANIA-448010";
 		String[] args = {FRAME_NUMBER_BIKE_1};
 		String where = BikeHistProvider.BikeHistContract.Tables.Bike.FrameNumber.NAME + " =?";
-		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_BIKES, null, where, args, null);
+		Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.Bike.URI, null, where, args, null);
 		if (c.getCount() == 0) {
-			Bike bike1 = new Bike(UUID.randomUUID(), getString(R.string.bikeNameBike1), FRAME_NUMBER_BIKE_1, false, System.currentTimeMillis());
-			cr.insert(BikeHistProvider.CONTENT_URI_BIKES, EntityUtilsFactory.createBikeUtils(this).build(bike1));
+			Bike bike1 = new Bike(UUID.randomUUID(), getString(R.string.bikeNameBike1),
+					FRAME_NUMBER_BIKE_1, false, System.currentTimeMillis());
+			cr.insert(BikeHistProvider.BikeHistContract.Tables.Bike.URI,
+					EntityUtilsFactory.createBikeUtils(this).build(bike1));
+
 		}
 		c.close();
 
@@ -151,19 +233,19 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 
 		String tagTypeWhere = BikeHistProvider.BikeHistContract.Tables.TagType.Name.NAME + " =?";
 		String[] tagTypeArgsMaintenance = {getString(R.string.tagTypeNameMaintenance)};
-		c = cr.query(BikeHistProvider.CONTENT_URI_TAG_TYPES, null, tagTypeWhere, tagTypeArgsMaintenance, null);
+		c = cr.query(BikeHistProvider.BikeHistContract.Tables.TagType.URI, null, tagTypeWhere, tagTypeArgsMaintenance, null);
 		if (c.getCount() == 0) {
 			//--- Create both default TagTypes
 			tagTypeMaintenance = new TagType(UUID.randomUUID(), tagTypeArgsMaintenance[0], false, System.currentTimeMillis());
-			cr.insert(BikeHistProvider.CONTENT_URI_TAG_TYPES, EntityUtilsFactory.createTagTypeUtils(this).build(tagTypeMaintenance));
+			cr.insert(BikeHistProvider.BikeHistContract.Tables.TagType.URI, EntityUtilsFactory.createTagTypeUtils(this).build(tagTypeMaintenance));
 		}
 		c.close();
 
 		String[] tagTypeArgsTimeEvents = {getString(R.string.tagTypeNameTimeEvent)};
-		c = cr.query(BikeHistProvider.CONTENT_URI_TAG_TYPES, null, tagTypeWhere, tagTypeArgsTimeEvents, null);
+		c = cr.query(BikeHistProvider.BikeHistContract.Tables.TagType.URI, null, tagTypeWhere, tagTypeArgsTimeEvents, null);
 		if (c.getCount() == 0) {
 			tagTypeTimeEvent = new TagType(UUID.randomUUID(), tagTypeArgsTimeEvents[0], false, System.currentTimeMillis());
-			cr.insert(BikeHistProvider.CONTENT_URI_TAG_TYPES, EntityUtilsFactory.createTagTypeUtils(this).build(tagTypeTimeEvent));
+			cr.insert(BikeHistProvider.BikeHistContract.Tables.TagType.URI, EntityUtilsFactory.createTagTypeUtils(this).build(tagTypeTimeEvent));
 		} else {
 			c.moveToFirst();
 		}
@@ -172,15 +254,15 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 		//----Create/add Tags once ----//
 		if (tagTypeMaintenance != null) {
 			Tag tag = new Tag(UUID.randomUUID(), getString(R.string.tagNameChain), tagTypeMaintenance.getId(), false, System.currentTimeMillis());
-			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, EntityUtilsFactory.createTagUtils(this).build(tag));
+			cr.insert(BikeHistProvider.BikeHistContract.Tables.Tag.URI, EntityUtilsFactory.createTagUtils(this).build(tag));
 
 			tag = new Tag(UUID.randomUUID(), getString(R.string.tagNameTyre), tagTypeMaintenance.getId(), false, System.currentTimeMillis());
-			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, EntityUtilsFactory.createTagUtils(this).build(tag));
+			cr.insert(BikeHistProvider.BikeHistContract.Tables.Tag.URI, EntityUtilsFactory.createTagUtils(this).build(tag));
 		}
 
 		if (tagTypeTimeEvent != null) {
 			Tag tag = new Tag(UUID.randomUUID(), getString(R.string.tagNameNewYear), tagTypeTimeEvent.getId(), false, System.currentTimeMillis());
-			cr.insert(BikeHistProvider.CONTENT_URI_TAGS, EntityUtilsFactory.createTagUtils(this).build(tag));
+			cr.insert(BikeHistProvider.BikeHistContract.Tables.Tag.URI, EntityUtilsFactory.createTagUtils(this).build(tag));
 		}
 
 //		//----Add an Event ----//
@@ -191,7 +273,7 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 //				0, 0 //Transient fields
 //		);
 //
-//		cr.insert(BikeHistProvider.CONTENT_URI_EVENTS, Utils.buildEventContentValues(event));
+//		cr.insert(BikeHistProvider.URI, Utils.buildEventContentValues(event));
 //
 //		id = UUID.randomUUID();
 //		String trip = "test trip";
@@ -201,7 +283,7 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 //				0, 0 //Transient fields
 //		);
 //
-//		cr.insert(BikeHistProvider.CONTENT_URI_EVENTS, Utils.buildEventContentValues(event));
+//		cr.insert(BikeHistProvider.URI, Utils.buildEventContentValues(event));
 //
 //		id = UUID.randomUUID();
 //		event = new Event(id, trip, System.currentTimeMillis(),
@@ -210,7 +292,7 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 //				0, 0 //Transient fields
 //		);
 //
-//		cr.insert(BikeHistProvider.CONTENT_URI_EVENTS, Utils.buildEventContentValues(event));
+//		cr.insert(BikeHistProvider.URI, Utils.buildEventContentValues(event));
 
 
 		// Never do this again
@@ -219,10 +301,9 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 		editor.apply();
 	}
 
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		Log.d(TAG, "onCreate()");
+//		Log.d(TAG, "onCreate()");
 		super.onCreate(savedInstanceState);
 
 		//Remove for production
@@ -251,7 +332,7 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 
 				/** Called when a main has settled in a completely closed state. */
 				public void onDrawerClosed(View view) {
-					Log.d(TAG, "onDrawerClosed");
+//					Log.d(TAG, "onDrawerClosed");
 					super.onDrawerClosed(view);
 					invalidateOptionsMenu();
 //					showEventList();
@@ -262,7 +343,7 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 
 				/** Called when a main has settled in a completely open state. */
 				public void onDrawerOpened(View drawerView) {
-					Log.d(TAG, "onDrawerOpened");
+//					Log.d(TAG, "onDrawerOpened");
 					super.onDrawerOpened(drawerView);
 
 					getSupportActionBar().setTitle(R.string.app_name);
@@ -279,15 +360,17 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 			getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 			getSupportActionBar().setHomeButtonEnabled(true);
 		}
-//		if (findViewById(R.id.mainDetailContainer) != null) {
-//			// The detail container view will be present only in the
-//			// large-screen layouts (res/values-large and
-//			// res/values-sw600dp). If this view is present, then the
-//			// activity should be in two-pane mode.
-//			mTwoPane = true;
-//
-//
-//		}
+
+		IntentFilter filter = new IntentFilter(SaveDataService.Contract.INTENT_NAME);
+		filter.addAction(ImportDialog.BROADCAST_ACTION_DATA_CHANGED);
+
+
+		LocalBroadcastManager.getInstance(this).registerReceiver(
+				broadcastReceiver, filter);
+
+		//Trigger Service to Broadcast its status
+		callServiceStatusRequest();
+
 
 	}
 
@@ -295,33 +378,51 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 	protected void onResume() {
 		super.onResume();
 
-		drawerOpen = getSharedPreferences(AppUtils.Prefs.PREF_NAME, 0).getBoolean(Constants.Prefs.KEY_DRAWER_OPEN, false);
-		drawerController.onChange();
-
-		if(drawerOpen && mDrawerLayout!=null)
-			mDrawerLayout.openDrawer(Gravity.LEFT);
-
 		showEventList();
 
 	}
 
 	@Override
-	protected void onPause() {
-		super.onPause();
+	public void onDestroy() {
+		super.onDestroy();
 
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
+	}
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		drawerOpen = getSharedPreferences(AppUtils.Prefs.PREF_NAME, 0).getBoolean(Constants.Prefs.KEY_DRAWER_OPEN, false);
+		drawerController.onChange();
+
+		if (drawerOpen && mDrawerLayout != null)
+			mDrawerLayout.openDrawer(GravityCompat.START);
+
+
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+		drawerController.onStop();
 		SharedPreferences.Editor editor = getSharedPreferences(AppUtils.Prefs.PREF_NAME, 0).edit();
 		editor.putBoolean(Constants.Prefs.KEY_DRAWER_OPEN, drawerOpen);
 		editor.apply();
-
-
 	}
 
 	/**
 	 * Only shows list, if Bike and Tag Type is selected in the drawer.
 	 */
 	private void showEventList() {
+		FragmentManager fragmentManager = getSupportFragmentManager();
 
+		//Show initial list, if missing selection
 		if (drawerController.getSelectedBike() == null || drawerController.getSelectedTagType() == null) {
+			//Remove existing Fragment with old list
+			if (fragmentManager.findFragmentByTag(EVENT_LIST_FRAGMENT_TAG) != null)
+				fragmentManager.beginTransaction()
+						.replace(R.id.mainHeaderContainer, new EmptyContentFragment())
+						.commit();
 			return;
 		}
 		//Standard case: bike and Type exist and are selected
@@ -342,7 +443,6 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 		fragment.setArguments(args);
 //
 //		// Insert the fragment by replacing any existing fragment
-		FragmentManager fragmentManager = getSupportFragmentManager();
 		fragmentManager.beginTransaction()
 				.replace(R.id.mainHeaderContainer, fragment, EVENT_LIST_FRAGMENT_TAG)
 				.commit();
@@ -355,17 +455,24 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 //		boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawer);
 		EntityLoader el = new EntityLoader(this);
 
-		boolean enableActionCreateEvent = (!drawerOpen || mDrawerLayout == null) && hasSelection() &&
+		boolean enable = !busyService && (!drawerOpen || mDrawerLayout == null);
+		boolean enableActionCreateEvent = enable && hasSelection() &&
 				el.tags(drawerController.getSelectedTagType()).size() > 0;
 
 		menu.findItem(R.id.actionCreateEvent).setEnabled(enableActionCreateEvent);
 		menu.findItem(R.id.actionCreateEvent).setVisible(enableActionCreateEvent);
 
-		menu.findItem(R.id.actionConfiguration).setEnabled(!drawerOpen || mDrawerLayout == null);
-		menu.findItem(R.id.actionConfiguration).setVisible(!drawerOpen || mDrawerLayout == null);
+		menu.findItem(R.id.actionConfiguration).setEnabled(enable);
+		menu.findItem(R.id.actionConfiguration).setVisible(enable);
 
-		menu.findItem(R.id.actionSync).setEnabled(!drawerOpen || mDrawerLayout == null);
-		menu.findItem(R.id.actionSync).setVisible(!drawerOpen || mDrawerLayout == null);
+		menu.findItem(R.id.actionSync).setEnabled(enable);
+		menu.findItem(R.id.actionSync).setVisible(enable);
+
+		menu.findItem(R.id.actionExport).setEnabled(enable);
+		menu.findItem(R.id.actionExport).setVisible(enable);
+
+		menu.findItem(R.id.actionImport).setEnabled(enable);
+		menu.findItem(R.id.actionImport).setVisible(enable);
 
 
 		return super.onPrepareOptionsMenu(menu);
@@ -425,9 +532,11 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 			case R.id.action_settings:
 				callPreferences();
 				return true;
+
 			case R.id.actionConfiguration:
 				callAdministration();
 				return true;
+
 			case R.id.actionCreateEvent:
 				onItemSelected(null, null);
 				return true;
@@ -435,6 +544,19 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 			case R.id.actionSync:
 				callSync();
 				return true;
+
+			case R.id.actionExport:
+				callExport();
+				return true;
+
+			case R.id.actionImport:
+				callImportDialog();
+				return true;
+
+			case R.id.actionHelp:
+				callHelp();
+				return true;
+
 		}
 
 		return super.
@@ -443,10 +565,59 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 
 	}
 
+	private void callHelp() {
+		Intent intent = new Intent(this, HelpActivity.class);
+		startActivity(intent);
+	}
+
+	/**
+	 * Popup the import dialog.
+	 */
+	private void callImportDialog() {
+
+		// DialogFragment.show() will take care of adding the fragment
+		// in a transaction.  We also want to remove any currently showing
+		// dialog, so make our own transaction and take care of that here.
+		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+		Fragment prev = getSupportFragmentManager().findFragmentByTag(IMPORT_DIALOG_TAG);
+		if (prev != null) {
+			ft.remove(prev);
+		}
+		ft.addToBackStack(null);
+
+
+		// Create and show the dialog.
+		importDialog = new ImportDialog();
+		importDialog.show(ft, IMPORT_DIALOG_TAG);
+
+
+	}
+
+	/**
+	 * Starts synchronizing data.
+	 */
+	private void callSync() {
+
+		//Lock edit functions
+		busyService = true;
+		invalidateOptionsMenu();
+
+		Intent intent = new Intent(this, SaveDataService.class);
+		intent.putExtra(SaveDataService.Contract.ACTION, SaveDataService.Contract.Sync.NAME);
+
+		startService(intent);
+
+	}
+
 	/**
 	 * Starts exporting data.
 	 */
-	private void callSync() {
+	private void callExport() {
+
+		//Lock edit functions
+		busyService = true;
+		invalidateOptionsMenu();
+
 		Intent intent = new Intent(this, SaveDataService.class);
 		intent.putExtra(SaveDataService.Contract.ACTION, SaveDataService.Contract.Export.NAME);
 
@@ -454,8 +625,19 @@ public class MainActivity extends ActionBarActivity implements ListCallbacks,
 
 	}
 
+	/**
+	 * TRiggers Service to broadcast its status (busy or idle)
+	 */
+	private void callServiceStatusRequest() {
+		Intent intent = new Intent(this, SaveDataService.class);
+		intent.putExtra(SaveDataService.Contract.ACTION, SaveDataService.Contract.GetStatus.NAME);
+
+		startService(intent);
+
+	}
+
 	private void callPreferences() {
-		startActivity(new Intent(this, SettingsActivity.class));
+//		startActivity(new Intent(this, SettingsActivity.class));
 	}
 
 	/**

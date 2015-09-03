@@ -9,7 +9,7 @@ import android.preference.PreferenceActivity;
  */
 public class SettingsActivity extends PreferenceActivity {
 
-	private String fragmentTag = "SETTINGS_FRAGMENT";
+	private final String fragmentTag = "SETTINGS_FRAGMENT";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {

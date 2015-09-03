@@ -1,8 +1,11 @@
 package de.egh.bikehist.persistance;
 
 import android.content.ContentProvider;
+import android.content.ContentProviderOperation;
+import android.content.ContentProviderResult;
 import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.OperationApplicationException;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.MatrixCursor;
@@ -12,20 +15,14 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.text.TextUtils;
 
+import java.util.ArrayList;
+
+import de.egh.bikehist.BuildConfig;
+
 /**
- * Created by ChristianSchulzendor on 01.02.2015.
+ * Content Provider.
  */
 public class BikeHistProvider extends ContentProvider {
-
-
-	public static final Uri CONTENT_URI_EVENTS = Uri.parse("content://" + BikeHistContract.URI_PATH + "/" //
-			+ BikeHistContract.Tables.Event.NAME);
-	public static final Uri CONTENT_URI_BIKES = Uri.parse("content://" + BikeHistContract.URI_PATH + "/" //
-			+ BikeHistContract.Tables.Bike.NAME);
-	public static final Uri CONTENT_URI_TAGS = Uri.parse("content://" + BikeHistContract.URI_PATH + "/" //
-			+ BikeHistContract.Tables.Tag.NAME);
-	public static final Uri CONTENT_URI_TAG_TYPES = Uri.parse("content://" + BikeHistContract.URI_PATH + "/" //
-			+ BikeHistContract.Tables.TagType.NAME);
 
 	private static final String TAG = BikeHistProvider.class.getSimpleName();
 	// Creates a UriMatcher object.
@@ -36,21 +33,38 @@ public class BikeHistProvider extends ContentProvider {
 	// trailing '/[rowID]' will represent a single earthquake row.
 	static {
 		uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-		uriMatcher.addURI(BikeHistContract.URI_PATH, BikeHistContract.Tables.Event.NAME, Constants.Uri.Event.MULTI);
-		uriMatcher.addURI(BikeHistContract.URI_PATH, BikeHistContract.Tables.Event.NAME + "/#", Constants.Uri.Event.ID);
+		uriMatcher.addURI(BikeHistContract.AUTHORITY, BikeHistContract.Tables.Event.NAME, Constants.Uri.Event.MULTI);
+		uriMatcher.addURI(BikeHistContract.AUTHORITY, BikeHistContract.Tables.Event.NAME + "/#", Constants.Uri.Event.ID);
 
-		uriMatcher.addURI(BikeHistContract.URI_PATH, BikeHistContract.Tables.Bike.NAME, Constants.Uri.Bike.MULTI);
-		uriMatcher.addURI(BikeHistContract.URI_PATH, BikeHistContract.Tables.Bike.NAME + "/#", Constants.Uri.Bike.ID);
+		uriMatcher.addURI(BikeHistContract.AUTHORITY, BikeHistContract.Tables.Bike.NAME, Constants.Uri.Bike.MULTI);
+		uriMatcher.addURI(BikeHistContract.AUTHORITY, BikeHistContract.Tables.Bike.NAME + "/#", Constants.Uri.Bike.ID);
 
-		uriMatcher.addURI(BikeHistContract.URI_PATH, BikeHistContract.Tables.Tag.NAME, Constants.Uri.Tag.MULTI);
-		uriMatcher.addURI(BikeHistContract.URI_PATH, BikeHistContract.Tables.Tag.NAME + "/#", Constants.Uri.Tag.ID);
+		uriMatcher.addURI(BikeHistContract.AUTHORITY, BikeHistContract.Tables.Tag.NAME, Constants.Uri.Tag.MULTI);
+		uriMatcher.addURI(BikeHistContract.AUTHORITY, BikeHistContract.Tables.Tag.NAME + "/#", Constants.Uri.Tag.ID);
 
-		uriMatcher.addURI(BikeHistContract.URI_PATH, BikeHistContract.Tables.TagType.NAME, Constants.Uri.TagType.MULTI);
-		uriMatcher.addURI(BikeHistContract.URI_PATH, BikeHistContract.Tables.TagType.NAME + "/#", Constants.Uri.TagType.ID);
+		uriMatcher.addURI(BikeHistContract.AUTHORITY, BikeHistContract.Tables.TagType.NAME, Constants.Uri.TagType.MULTI);
+		uriMatcher.addURI(BikeHistContract.AUTHORITY, BikeHistContract.Tables.TagType.NAME + "/#", Constants.Uri.TagType.ID);
 	}
 
 	//The underlying database
 	private SQLiteDatabase bikeHistDB;
+
+	/**
+	 * Transactional batch processing. Idionm seen here: http://www.databaseskill.com/3214964/
+	 */
+	@Override
+	public ContentProviderResult[] applyBatch(ArrayList<ContentProviderOperation> operations)
+			throws OperationApplicationException {
+
+		bikeHistDB.beginTransaction();
+		try {
+			ContentProviderResult[] results = super.applyBatch(operations);
+			bikeHistDB.setTransactionSuccessful();//successful
+			return results;
+		} finally {
+			bikeHistDB.endTransaction();
+		}
+	}
 
 	@Override
 	public boolean onCreate() {
@@ -168,19 +182,19 @@ public class BikeHistProvider extends ContentProvider {
 		 * @throws IllegalArgumentException Uri could not resolved for a table
 		 */
 		static TableStrategy create(SQLiteDatabase db, Uri uri) {
-			if (uri.toString().contains(BikeHistContract.URI_PATH + "/" + BikeHistContract.Tables.Event.NAME)) {
+			if (uri.toString().contains(BikeHistContract.AUTHORITY + "/" + BikeHistContract.Tables.Event.NAME)) {
 				return new EventStrategy(db, uri);
 			}
 
-			if (uri.toString().contains(BikeHistContract.URI_PATH + "/" + BikeHistContract.Tables.Bike.NAME)) {
+			if (uri.toString().contains(BikeHistContract.AUTHORITY + "/" + BikeHistContract.Tables.Bike.NAME)) {
 				return new BikeStrategy(db, uri);
 			}
 
-			if (uri.toString().contains(BikeHistContract.URI_PATH + "/" + BikeHistContract.Tables.TagType.NAME)) {
+			if (uri.toString().contains(BikeHistContract.AUTHORITY + "/" + BikeHistContract.Tables.TagType.NAME)) {
 				return new TagTypeStrategy(db, uri);
 			}
 
-			if (uri.toString().contains(BikeHistContract.URI_PATH + "/" + BikeHistContract.Tables.Tag.NAME)) {
+			if (uri.toString().contains(BikeHistContract.AUTHORITY + "/" + BikeHistContract.Tables.Tag.NAME)) {
 				return new TagStrategy(db, uri);
 			}
 
@@ -207,7 +221,7 @@ public class BikeHistProvider extends ContentProvider {
 
 			// Return a URI to the newly inserted row on success.
 			if (rowID > 0) {
-				return uri = ContentUris.withAppendedId(CONTENT_URI_EVENTS, rowID);
+				return uri = ContentUris.withAppendedId(BikeHistContract.Tables.Event.URI, rowID);
 			}
 			throw new SQLException("Insert failed into " + uri + " for " + _initialValues.toString());
 		}
@@ -414,9 +428,6 @@ public class BikeHistProvider extends ContentProvider {
 					BikeHistContract.Tables.Event.Distance.NAME,
 					BikeHistContract.Tables.Event.BikeId.NAME,
 					BikeHistContract.Tables.Event.TagId.NAME,
-					BikeHistContract.Tables.Event.GeoLongitude.NAME,
-					BikeHistContract.Tables.Event.GeoLatitude.NAME,
-					BikeHistContract.Tables.Event.GeoAltitude.NAME,
 					BikeHistContract.Tables.Event.Timestamp.NAME,
 					BikeHistContract.Tables.Event.DiffDistance.NAME,
 					BikeHistContract.Tables.Event.DiffTimestamp.NAME});
@@ -468,9 +479,6 @@ public class BikeHistProvider extends ContentProvider {
 							distance,
 							c.getString(BikeHistContract.Tables.Event.BikeId.NUMBER),
 							c.getString(BikeHistContract.Tables.Event.TagId.NUMBER),
-							c.getString(BikeHistContract.Tables.Event.GeoLongitude.NUMBER),
-							c.getString(BikeHistContract.Tables.Event.GeoLatitude.NUMBER),
-							c.getString(BikeHistContract.Tables.Event.GeoAltitude.NUMBER),
 							timestamp,
 							diffDistance,
 							diffTimestamp
@@ -488,7 +496,7 @@ public class BikeHistProvider extends ContentProvider {
 	static final class Constants {
 		static final class Database {
 			static final String NAME = "bikeHist.db";
-			static final int VERSION = 19;
+			static final int VERSION = 20;
 
 		}
 
@@ -532,30 +540,32 @@ public class BikeHistProvider extends ContentProvider {
 		 */
 		public static final String[] QUERY_COUNT_PROJECTION = {"count(*) AS count"};
 		/**
-		 * URI path for the ContentProvider.
+		 * URI path for the ContentProvider. Also known as authority. Must match
+		 * with the manifest entry.
 		 */
-		static final String URI_PATH = "de.egh.provider.bikehist";
+			public static final String AUTHORITY = BuildConfig.APPLICATION_ID +
+				".provider.bikehist";
 
 
 		/**
 		 * ContentProvider doesn't hide that SQLite database has no Boolean type. Use Int instead.
 		 */
-		public final class Boolean {
+		public static final class Boolean {
+			public static final class False {
+				public static final int asInt = 0;
+				public static final String asString = "0";
+			}
+
 			public final class True {
 				public static final int asInt = 1;
 				public static final String asString = "1";
-			}
-
-			public final class False {
-				public static final int asInt = 0;
-				public static final String asString = "0";
 			}
 		}
 
 		/**
 		 * For all tables: EVENT_ID is the UUID, not database table id (_ID)
 		 */
-		public final class Tables {
+		public static final class Tables {
 
 			/**
 			 * Field name for the key field in the database tables. Never use this for
@@ -566,12 +576,12 @@ public class BikeHistProvider extends ContentProvider {
 			/**
 			 * Base fields for all Entities.
 			 */
-			public abstract class BikeHistEntity {
+			public static abstract class BikeHistEntity {
 
 				/**
 				 * UUID
 				 */
-				public final class Id {
+				public static final class Id {
 					public static final int NUMBER = 1;
 					public static final String NAME = "id";
 				}
@@ -579,7 +589,7 @@ public class BikeHistProvider extends ContentProvider {
 				/**
 				 * Readable name
 				 */
-				public final class Name {
+				public static final class Name {
 					public static final int NUMBER = 2;
 					public static final String NAME = "name";
 				}
@@ -587,7 +597,7 @@ public class BikeHistProvider extends ContentProvider {
 				/**
 				 * Int as Boolean: 1 (true), if dataset is deleted, otherwise 0
 				 */
-				public final class Deleted {
+				public final static class Deleted {
 					public static final int NUMBER = 3;
 					public static final String NAME = "deleted";
 				}
@@ -596,7 +606,7 @@ public class BikeHistProvider extends ContentProvider {
 				/**
 				 * system time of last touch (modified data)
 				 */
-				public final class TouchedAt {
+				public final static class TouchedAt {
 					public static final int NUMBER = 4;
 					public static final String NAME = "touchedAt";
 				}
@@ -605,11 +615,13 @@ public class BikeHistProvider extends ContentProvider {
 			/**
 			 * Additional constants for table of Tags, base definition, see BikeHistEntity
 			 */
-			public final class Tag extends BikeHistEntity {
+			public static final class Tag extends BikeHistEntity {
 				/**
 				 * Name of the table
 				 */
 				public static final String NAME = "tags";
+				public static final Uri URI = Uri.parse("content://" + AUTHORITY + "/" //
+						+ NAME);
 
 				/**
 				 * Foreign key: ID of TagType
@@ -623,21 +635,27 @@ public class BikeHistProvider extends ContentProvider {
 			/**
 			 * Additional constants for table of TagTypes, base definition, see BikeHistEntity
 			 */
-			public final class TagType extends BikeHistEntity {
+			public static final class TagType extends BikeHistEntity {
 				/**
 				 * Name of the table
 				 */
 				public static final String NAME = "tagTypes";
+				public static final Uri URI = Uri.parse("content://" + AUTHORITY + "/" //
+						+ NAME);
 			}
 
 			/**
 			 * Additional constants for table of Bikes, base definition, see BikeHistEntity
 			 */
-			public final class Bike extends BikeHistEntity {
+			public static final class Bike extends BikeHistEntity {
+
+
 				/**
 				 * Name of the table
 				 */
 				public static final String NAME = "bikes";
+				public static final Uri URI = Uri.parse("content://" + AUTHORITY + "/" //
+						+ NAME);
 
 				/**
 				 * String with the frame number
@@ -651,16 +669,18 @@ public class BikeHistProvider extends ContentProvider {
 			/**
 			 * Additional constants for table of Events, base definition, see BikeHistEntity
 			 */
-			public final class Event extends BikeHistEntity {
+			public static final class Event extends BikeHistEntity {
 				/**
 				 * Name of the table
 				 */
 				public static final String NAME = "events";
+				public static final Uri URI = Uri.parse("content://" + AUTHORITY + "/" //
+						+ NAME);
 
 				/**
 				 * Long with the distance in meters
 				 */
-				public final class Distance {
+				public static final class Distance {
 					public static final int NUMBER = 5;
 					public static final String NAME = "distance";
 				}
@@ -668,7 +688,7 @@ public class BikeHistProvider extends ContentProvider {
 				/**
 				 * Foreign key: ID of Bike
 				 */
-				public final class BikeId {
+				public static final class BikeId {
 					public static final int NUMBER = 6;
 					public static final String NAME = "bikeId";
 				}
@@ -676,206 +696,36 @@ public class BikeHistProvider extends ContentProvider {
 				/**
 				 * Foreign key: ID of Tag
 				 */
-				public final class TagId {
+				public static final class TagId {
 					public static final int NUMBER = 7;
 					public static final String NAME = "tagId";
-				}
-
-				@Deprecated
-				public final class GeoLongitude {
-					public static final int NUMBER = 8;
-					public static final String NAME = "geoLongitude";
-				}
-
-				@Deprecated
-				public final class GeoLatitude {
-					public static final int NUMBER = 9;
-					public static final String NAME = "geoLatitude";
-				}
-
-				@Deprecated
-				public final class GeoAltitude {
-					public static final int NUMBER = 10;
-					public static final String NAME = "geoAltitude";
 				}
 
 				/**
 				 * Long with system time of the event
 				 */
-				public final class Timestamp {
-					public static final int NUMBER = 11;
+				public static final class Timestamp {
+					public static final int NUMBER = 8;
 					public static final String NAME = "timestamp";
 				}
 
 				/**
 				 * Transient field: Long the differnce of the distance
 				 */
-				public final class DiffDistance {
-					public static final int NUMBER = 12;
+				public static final class DiffDistance {
+					public static final int NUMBER = 9;
 					public static final String NAME = "diffDistance";
 				}
 
 				/**
 				 * Transient field: Long the differnce of the timestamp
 				 */
-				public final class DiffTimestamp {
-					public static final int NUMBER = 13;
+				public static final class DiffTimestamp {
+					public static final int NUMBER = 10;
 					public static final String NAME = "diffTimestamp";
 				}
 			}
 
-//			/**
-//			 * Tag has following fields:
-//			 * <ul>
-//			 * <li>String id - Unique EVENT_ID (UUID as String)</li>
-//			 * <li>String name - Description</li>
-//			 * <li>String tagTypeId - Identifier (UUID) of the TagType </ul>
-//			 */
-//			public final class Tag {
-//				public static final String NAME = "tags";
-//
-//				public final class Columns {
-//					public final class Number {
-//						public static final int ID = 1;
-//						public static final int NAME = 2;
-//						public static final int TAG_TYPE_ID = 3;
-//						public static final int DELETED = 4;
-//						public static final int TOUCHED_AT = 5;
-//					}
-//
-//					public final class Name {
-//						public static final String ID = "id";
-//						public static final String NAME = "name";
-//						public static final String TAG_TYPE_ID = "tagTypeId";
-//						public static final String DELETED = "deleted";
-//						public static final String TOUCHED_AT = "touchedAt";
-//					}
-//				}
-//			}
-
-//			/**
-//			 * TagType has following fields:
-//			 * <ul>
-//			 * <li>String id - Unique EVENT_ID (UUID as String)</li>
-//			 * <li>String name - Description</li>
-//			 */
-//			public final class TagType {
-//				public static final String NAME = "tagTypes";
-//
-//				public final class Columns {
-//					public final class Number {
-//						public static final int ID = 1;
-//						public static final int NAME = 2;
-//						public static final int DELETED = 3;
-//						public static final int TOUCHED_AT = 4;
-//					}
-//
-//					public final class Name {
-//						public static final String ID = "id";
-//						public static final String NAME = "name";
-//						public static final String DELETED = "deleted";
-//						public static final String TOUCHED_AT = "touchedAt";
-//					}
-//				}
-//			}
-
-
-//			/**
-//			 * Bike has following fields:
-//			 * <ul>
-//			 * <li>String id - Unique EVENT_ID (UUID as String)</li>
-//			 * <li>String name - Description</li>
-//			 * <li>String frameNumber - Identifier of the bike, e.g. 'Brompton 448010'</li> </ul>
-//			 */
-//			public final class Bike {
-//				public static final String NAME = "bikes";
-//
-//				public final class Columns {
-//					public final class Number {
-//						public static final int ID = 1;
-//						public static final int NAME = 2;
-//						public static final int FRAME_NUMBER = 3;
-//						public static final int DELETED = 4;
-//						public static final int TOUCHED_AT = 5;
-//					}
-//
-//					public final class Name {
-//						public static final String ID = "id";
-//						public static final String NAME = "name";
-//						public static final String FRAME_NUMBER = "frameNumber";
-//						public static final String DELETED = "deleted";
-//						public static final String TOUCHED_AT = "touchedAt";
-//					}
-//				}
-//			}
-
-//			/**
-//			 * Event has following fields:
-//			 * <ul>
-//			 * <li>String id - Unique EVENT_ID (UUID as String)</li>
-//			 * <li>String name - Events description</li>
-//			 * <li>long distance - Millimeter value</li>
-//			 * <li>String BikeId - Bikes unique EVENT_ID (UUID as String)</li>
-//			 * <li>String TagId - Tags unique EVENT_ID (UUID as String)</li>
-//			 * <li>Double longitude - Geoposition</li>
-//			 * <li>Double latitude - Geoposition</li>
-//			 * <li>Double altitude - Geoposition</li>
-//			 * <li>long timestamp - Create time in milliseconds</li>
-//			 * </ul>
-//			 */
-//			public final class Event {
-//
-//
-//				public static final String NAME = "events";
-//
-//				public final class Columns {
-//					public final class Number {
-//						public static final int ID = 1; // 0 is the database key field _ID
-//						public static final int NAME = 2;
-//						public static final int DISTANCE = 3;
-//						public static final int BIKE_ID = 4;
-//						public static final int TAG_ID = 5;
-//						public static final int GEO_LONGITUDE = 6;
-//						public static final int GEO_LATITUDE = 7;
-//						public static final int GEO_ALTITUDE = 8;
-//						public static final int TIMESTAMP = 9;
-//						public static final int DELETED = 10;
-//						public static final int TOUCHED_AT = 11;
-//						/**
-//						 * Transient field
-//						 */
-//						public static final int DIFF_DISTANCE = 12;
-//						/**
-//						 * Transient field
-//						 */
-//						public static final int DIFF_TIMESTAMP = 13;
-//					}
-//
-//					public final class Name {
-//						public static final String ID = "id";
-//						public static final String NAME = "name";
-//						public static final String DISTANCE = "distance";
-//						public static final String BIKE_ID = "bikeId";
-//						public static final String TAG_ID = "tagId";
-//						public static final String GEO_LONGITUDE = "GeoLongitude";
-//						public static final String GEO_LATITUDE = "GeoLatitude";
-//						public static final String GEO_ALTITUDE = "GeoAltitude";
-//						public static final String TIMESTAMP = "timestamp";
-//						public static final String DELETED = "deleted";
-//						public static final String TOUCHED_AT = "touchedAt";
-//						/**
-//						 * Transient field
-//						 */
-//						public static final String DIFF_DISTANCE = "diffDistance";
-//						/**
-//						 * Transient field
-//						 */
-//						public static final String DIFF_TIMESTAMP = "diffTimestamp";
-//					}
-//				}
-//
-//
-//			}
 		}
 	}
 

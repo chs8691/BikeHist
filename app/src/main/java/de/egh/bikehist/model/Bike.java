@@ -18,6 +18,8 @@ public class Bike implements ModelType {
 	 * @param id          UUID for this dataset
 	 * @param name        String with name
 	 * @param frameNumber Unique EVENT_ID of the bike
+	 * @param deleted     true, if entity is deleted, otherwise false
+	 * @param touchedAt   long with timestampe
 	 */
 	public Bike(UUID id, String name, String frameNumber, boolean deleted, long touchedAt) {
 		this.name = name;
@@ -27,18 +29,22 @@ public class Bike implements ModelType {
 		this.touchedAt = touchedAt;
 	}
 
+	@Override
 	public long getTouchedAt() {
 		return touchedAt;
 	}
 
+	@Override
 	public void setTouchedAt(long touchedAt) {
 		this.touchedAt = touchedAt;
 	}
 
+	@Override
 	public boolean isDeleted() {
 		return deleted;
 	}
 
+	@Override
 	public void setDeleted(boolean deleted) {
 		this.deleted = deleted;
 	}

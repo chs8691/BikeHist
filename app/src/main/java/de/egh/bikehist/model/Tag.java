@@ -10,18 +10,22 @@ public class Tag implements ModelType{
 	private boolean deleted;
 	private long touchedAt;
 
+	@Override
 	public boolean isDeleted() {
 		return deleted;
 	}
 
+	@Override
 	public void setDeleted(boolean deleted) {
 		this.deleted = deleted;
 	}
 
+	@Override
 	public long getTouchedAt() {
 		return touchedAt;
 	}
 
+	@Override
 	public void setTouchedAt(long touchedAt) {
 		this.touchedAt = touchedAt;
 	}

@@ -1,0 +1,40 @@
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+		<TITLE>BikeHist Hilfe</TITLE>
+	</head>
+	<body>
+
+<h2>Einführung</h2>
+Mit BikeHist lassen sich für mehrere Fahrräder die durchgeführten Wartungstätigkeiten erfassen (z.B. 'Schwelba Marathon 26", bei 10.023 KM am 13.12.2015 augezogen, ersetzt den Originalmantel'). So kann man genau nachhalten, wie lange die Komponenten in Bezug auf Dauer und Laufleistung gehalten haben. 
+<p>
+Um verschiedene Wartungarten auseinander zu halten, werden diese einem Tag zugwiesen (z.B. 'Mantel'), Tags wiederum werden in Tag-Typen gruppiert (z. B. 'Laufrad'). Das ermöglicht eine individuelle Datenerfassung und schreibt keine feste Gruppierung vor.
+<p>
+Der komplette Datenbestand kann per Ex- und Import gesichert werden, so dass Daten bei Gerätetausch nicht verloren gehen. 
+<p>
+Der Export erfolgt auf den externen Speicher /BikHist/export
+<p>
+Bei Android älter als  4.4.2 wird für den Import eine zusätzliche App für die Dateiauswahl benötigt (z. B. Google Drive, OI File o.ä.)
+
+<p>Die Pro-Version bietet zusätzlich eine dateibasierte, lokale Synchronisation an. Damit lässt sich ein weiteres Geräte zur Erfassung einsetzen (z. B. Tablet und Smartphone). Es muss lediglich die Synchronisationdatei auf das  zweite Gerät kopiert werden und umgekehrt. Verwenden Sie dazu z. B. eine separate Synchronisations-App wie FolderSync (nicht Bestandteil diese App).
+
+<h2>Beispiel</h2>
+Es wird das oben genannte Beispiel für Fahrrad 'Brompton' durchgespielt. Zuerst müssen unter 'Konfiguration' die Stammdaten angelegt werden. Dort erfasst man ein neues Fahrrad 'Brompton' und gibt diesem mit der Rahmennummer eine eindeutige ID. Dann legt man den Tag-Typ 'Laufrad'. Als Letztes wir der Tag 'Mantel' erstellt und dem Tag-Typ 'Laufrad' zugewiesen. Damit ist die Konfiguration abgeschlossen. 
+<p>
+In der Hautpsicht kann man im linken Menü nach Konfiguratonen filtern. 
+<p>
+Als erstes wird nun ein Ereignis für den alten, zu tauschenden Mantel angelegt: Ereignisname = 'Originalmantel', Datum = Kaufdatum des Fahrrades, KM-Stand = 0, Tag = 'Mantel'. Mit sichern wird das Ereignis angelegt und die Ereignisliste angezeigt. 
+<p>
+Erfassen wir jetzt das Ereignis für den neu eingebauten Mantel. Ereignisname = 'Schwelba Marathon 26"', Datum = heutiges Datum, KM-Stand = Aktuelle Laufleistung des Fahrrades vom Tacho ablesen, Tag = 'Mantel'. Mit sichern wird das Ereignis angelegt und die Ereignisliste angezeigt. Am Originalmantel sieht man nun, wievie er gelaufen ist.
+<p>
+
+<h2>Datenformat</h2>
+Das Dateiaustauschformat ist für Im-/Export und Synchronisation gleich, die Daten werden im JSON gehalten. Zeitstempel sind JAVA-Timestamps,  IDs sind generierte GUIDs.
+
+<h2>Impressum</h2>
+Earl Grey's Hand<br>
+earl.greys.hand@gmail.com
+<p>
+Diese App ist noch jung, Ihr Feedback kann helfen, sie zu verbessern.
+	</body>
+</html>

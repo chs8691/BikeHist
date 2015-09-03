@@ -103,9 +103,10 @@ public class EventListFragment extends ListFragment implements android.support.v
 		bikeId = getArguments().getString(Args.BIKE_ID);
 		tagIds = getArguments().getStringArrayList(Args.TAG_IDS);
 
-		headerView.setText(
-				new EntityLoader(getActivity()).tagType(tagTypeId).getName()
-		);
+		if (tagTypeId != null) {
+			headerView.setText(
+					new EntityLoader(getActivity()).tagType(tagTypeId).getName());
+		}
 
 
 		aa = new EventListItemAdapter(getActivity(), listItems);
@@ -135,7 +136,7 @@ public class EventListFragment extends ListFragment implements android.support.v
 				tags.clear();
 				return new CursorLoader(
 						getActivity(),
-						BikeHistProvider.CONTENT_URI_TAGS,
+						Tables.Tag.URI,
 						null,
 						Tables.Tag.TagTypeId.NAME + "=?",
 						new String[]{tagTypeId},
@@ -155,12 +156,16 @@ public class EventListFragment extends ListFragment implements android.support.v
      */
 
 					return new CursorLoader(getActivity(),
-							BikeHistProvider.CONTENT_URI_EVENTS,
+							Tables.Event.URI,
 							null,
 							Tables.Event.BikeId.NAME + "=? AND "
+									+ Tables.BikeHistEntity.Deleted.NAME + "=? AND "
 									+ Tables.Event.TagId.NAME + " IN (SELECT " + Tables.Tag.Id.NAME + " FROM "
 									+ Tables.Tag.NAME + " WHERE " + Tables.Tag.TagTypeId.NAME + "=?)",
-							new String[]{bikeId, tagTypeId},
+
+							new String[]{bikeId,
+									BikeHistProvider.BikeHistContract.Boolean.False.asString,
+									tagTypeId },
 							// Order by
 							Tables.Event.Timestamp.NAME + " DESC ");
 
@@ -182,7 +187,7 @@ public class EventListFragment extends ListFragment implements android.support.v
 					args.addAll(tagIds);
 
 					return new CursorLoader(getActivity(),
-							BikeHistProvider.CONTENT_URI_EVENTS,
+							Tables.Event.URI,
 							null,
 							Tables.Event.BikeId.NAME + "=? AND "
 									+ Tables.Event.TagId.NAME + " IN  (" + makePlaceholders(tagIds.size()) + ") ",
@@ -327,7 +332,7 @@ public class EventListFragment extends ListFragment implements android.support.v
 	}
 
 	private abstract static class Contract {
-		public static final String ITEM_ID = "ITEM_ID";
+		public static final String ITEM_ID = "ENTITY_ID";
 	}
 
 	private abstract static class Constants {
@@ -338,7 +343,7 @@ public class EventListFragment extends ListFragment implements android.support.v
 	}
 
 	public static final class Args {
-		public static final String BIKE_ID = "ITEM_ID";
+		public static final String BIKE_ID = "ENTITY_ID";
 		public static final String TAG_TYPE_ID = "TAG_TYPE_ID";
 		public static final String TAG_IDS = "TAG_IDS";
 	}

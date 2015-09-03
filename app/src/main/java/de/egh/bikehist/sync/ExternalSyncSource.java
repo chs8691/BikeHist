@@ -5,7 +5,7 @@ import java.io.UnsupportedEncodingException;
 /**
  * Interface to an external synchronization source, for instance a file.
  */
-public interface ExternalSyncSource {
+interface ExternalSyncSource {
 
 
 	/**
@@ -20,19 +20,15 @@ public interface ExternalSyncSource {
 	 *
 	 * @return SyncData External data of null, if access failed
 	 */
-	public abstract SyncData getData() throws UnsupportedEncodingException;
+	public abstract SyncData getData();
 
 	/**
-	 * Step 3: Merged data set. The external source data should be replaced completely by this data.
-	 */
-	public abstract void putData(SyncData syncData);
-
-	/**
-	 * Step 4: Commits the data to the external source, for instance by writing data to files.
-	 *
+	 * Step 3: Replaces existing data with new data set in the persistance unit (e.g. sync file).
+	 * The external source data should be replaced completely by this data.
 	 * @throws BikeHistSyncException Step failed
 	 */
-	public abstract void commit() throws BikeHistSyncException;
+	public abstract void putData(EntityContainer data)throws BikeHistSyncException;
+
 
 
 }

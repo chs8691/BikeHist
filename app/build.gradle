@@ -3,26 +3,97 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 22
     buildToolsVersion '21.1.2'
+
     defaultConfig {
         applicationId "de.egh.bikehist"
         minSdkVersion 15
         targetSdkVersion 22
-        versionCode 1
-        versionName "1.0"
+        versionName "1.0.0-0001"
+        versionCode  getBuildNrAsInteger(versionName)
+    }
+
+ 
+
+    /** Replace default file*/
+//     applicationVariants.all { variant ->
+//     appendVersionName(variant, defaultConfig)}
+
+    productFlavors {
+        free {
+            applicationId  "de.egh.bikehist.free"
+            versionName "1.0.0-0001-free"
+            versionCode  getBuildNrAsInteger(versionName)
+        }
+        pro {
+            applicationId  "de.egh.bikehist.pro"
+            versionName "1.0.0-0001-pro"
+            versionCode  getBuildNrAsInteger(versionName)
+        }
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    productFlavors {
-    }
+
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:appcompat-v7:22.0.0'
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v7:22.2.1'
     compile 'joda-time:joda-time:2.3'
-    compile 'com.android.support:support-v4:22.0.0'
+    compile 'com.android.support:support-v4:22.2.1'
+//    androidTestCompile 'com.android.support.test.espresso:espresso-core:2.0'
+//    androidTestCompile 'com.android.support.test:runner:0.2'
+}
+
+/** Extracts build number from version name and returns as String*/
+def getBuildNrAsString(versionName) {
+    return versionName.split("-")[1]
+}
+
+/** Extracts build number from version name and returns as String*/
+def getBuildNrAsInteger(versionName) {
+    def nr = Integer.valueOf(getBuildNrAsString(versionName))
+    System.out.println("Found versionName='" + versionName + "'. Set versionCode=" + nr)
+    return nr
+}
+
+def createAppName(applicationId) {
+    String[] parts = applicationId.split("\\.")
+    int size = parts.length
+    String part1 = parts[size - 2]
+    String part2 = parts[size - 1]
+    return part1.toUpperCase() + "-" + part2.toUpperCase()
+
+}
+
+/** Set correct file name for release apk*/
+def appendVersionName(variant, defaultConfig) {
+    variant.outputs.each { output ->
+        // def date = new Date().format("YYYYMMdd-HHmmss")
+        def buildNr = getBuildNrAsString(defaultConfig.versionName)
+        def releaseNr = defaultConfig.versionName.split("-")[0]
+        def appName = createAppName(defaultConfig.applicationId)
+        def suffix
+
+        if (output.outputFile.name.contains("debug")) {
+            suffix = "-debug.apk"
+        } else {
+            suffix = ".apk"
+        }
+
+        if (output.zipAlign) {
+            def file = output.outputFile
+            def fileName = appName + "-" + buildNr + "-" + releaseNr + suffix
+            output.outputFile = new File(file.parent, fileName)
+        } else {
+            def file = output.packageApplication.outputFile
+            def fileName = appName + "-" + buildNr + "-" + releaseNr + "_unaligned" + suffix
+            output.packageApplication.outputFile = new File(file.parent, fileName)
+            //System.out.println("Output=" + output.name + " Set file name=" + file.parent + "\\" + fileName)
+        }
+    }
 }

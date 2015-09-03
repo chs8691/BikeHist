@@ -68,7 +68,8 @@
                 android:labelFor="@+id/event_detail_date"
                 android:paddingBottom="10dp"
                 android:paddingRight="60dp"
-
+                android:paddingEnd="60dp"
+                android:paddingLeft="60dp"
                 android:paddingTop="20dp"
                 android:text="@string/labelDate"/>
 
@@ -79,7 +80,6 @@
                 android:layout_height="wrap_content"
                 android:layout_alignBaseline="@+id/event_detail_date_label"
                 android:layout_toEndOf="@+id/event_detail_date_label"
-                android:layout_toRightOf="@+id/event_detail_date_label"
                 android:clickable="true"
                 android:ems="10"
                 android:enabled="true"
@@ -123,6 +123,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignBaseline="@+id/event_detail_distance_label"
                 android:layout_toRightOf="@+id/event_detail_distance"
+                android:layout_toEndOf="@+id/event_detail_distance"
                 android:paddingBottom="5dp"
                 android:paddingTop="20dp"
                 android:text="@string/km"/>

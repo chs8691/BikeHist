@@ -10,7 +10,7 @@ public class Event implements ModelType {
 	private final UUID bikeId;
 	private long timestamp;
 	private UUID tagId;
-	private GeoLocation geoLocation;
+
 	private String name;
 	private long distance;
 	/**
@@ -24,21 +24,8 @@ public class Event implements ModelType {
 	private boolean deleted;
 	private long touchedAt;
 
-	/**
-	 * @param id            UUID for the event
-	 * @param name          String
-	 * @param distance      Distance in Meter
-	 * @param bikeId        UUID for the foreign key bikeID
-	 * @param tagId         UUID for the foreign key tagID
-	 * @param geoLocation   Optional
-	 * @param timestamp     Long with the timestamp of the event
-	 * @param diffDistance  Long
-	 * @param diffTimestamp Long
-	 * @param deleted       boolean
-	 * @param touchedAt     long
-	 */
 	public Event(UUID id, String name, boolean deleted, long touchedAt, long distance, UUID bikeId,
-	             UUID tagId, GeoLocation geoLocation, long timestamp,
+	             UUID tagId, long timestamp,
 	             long diffDistance, long diffTimestamp) {
 
 		this.id = id;
@@ -51,21 +38,26 @@ public class Event implements ModelType {
 		this.timestamp = timestamp;
 		this.diffDistance = diffDistance;
 		this.diffTimestamp = diffTimestamp;
-		this.geoLocation = geoLocation != null ? geoLocation : new GeoLocation(0, 0, 0);
+
 	}
 
+
+	@Override
 	public boolean isDeleted() {
 		return deleted;
 	}
 
+	@Override
 	public void setDeleted(boolean deleted) {
 		this.deleted = deleted;
 	}
 
+	@Override
 	public long getTouchedAt() {
 		return touchedAt;
 	}
 
+	@Override
 	public void setTouchedAt(long touchedAt) {
 		this.touchedAt = touchedAt;
 	}
@@ -114,19 +106,12 @@ public class Event implements ModelType {
 		this.tagId = tagId;
 	}
 
-	public GeoLocation getGeoLocation() {
-		return geoLocation;
-	}
-
-	public void setGeoLocation(GeoLocation geoLocation) {
-		this.geoLocation = geoLocation;
-	}
-
 	@Override
 	public UUID getId() {
 		return id;
 	}
 
+	@Override
 	public String getName() {
 		return name;
 	}

@@ -7,7 +7,7 @@ public class MasterDataContract {
 
 	/** Type of master data */
 	public static abstract class Type {
-		/** NAME of Extra */
+		/** NAME_STRING of Extra */
 		public static final String NAME = "PARAMETERS_TYPE";
 
 		/** Values for Extra TYPE */

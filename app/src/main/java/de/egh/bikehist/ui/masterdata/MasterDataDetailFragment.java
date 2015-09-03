@@ -32,6 +32,7 @@ import java.util.UUID;
 
 import de.egh.bikehist.R;
 import de.egh.bikehist.model.Bike;
+import de.egh.bikehist.model.EntityLoader;
 import de.egh.bikehist.model.Tag;
 import de.egh.bikehist.model.TagType;
 import de.egh.bikehist.model.Utils.EntityUtilsFactory;
@@ -62,30 +63,31 @@ public class MasterDataDetailFragment extends Fragment {
 	 * clicks.
 	 */
 	private Callbacks mCallbacks = sDummyCallbacks;
+
 	private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 
 			if (intent.hasExtra(SaveDataService.Contract.ACTION)) {
-				if (intent.getStringExtra(SaveDataService.Contract.ACTION).equals(SaveDataService.Contract.DeleteMasterDataAction.NAME)) {
+				if (intent.getStringExtra(SaveDataService.Contract.ACTION).equals(SaveDataService.Contract.DeleteEntityAction.NAME)) {
 
 					//Error handling
-					if (intent.getBooleanExtra(SaveDataService.Contract.DeleteMasterDataAction.Result.ERROR, false)) {
+					if (intent.getBooleanExtra(SaveDataService.Contract.DeleteEntityAction.Result.ERROR, false)) {
 						Toast.makeText(getActivity(), getString(R.string.messageDeleteError), Toast.LENGTH_LONG).show();
 						return;
 					}
 
 					//Success reporting
-					int nrItems = intent.getIntExtra(SaveDataService.Contract.DeleteMasterDataAction.Result.NO_MAIN_MASTER_DATA_DELETED, 0);
-					int nrDependent = intent.getIntExtra(SaveDataService.Contract.DeleteMasterDataAction.Result.NO_DEPENDENT_ITEMS_TOUCHED, 0);
-					String type = intent.getStringExtra(MasterDataContract.Type.NAME);
-					if (type.equals(MasterDataContract.Type.Values.BIKE)) {
+					int nrItems = intent.getIntExtra(SaveDataService.Contract.DeleteEntityAction.Result.NO_MAIN_ENTITY_DELETED, 0);
+					int nrDependent = intent.getIntExtra(SaveDataService.Contract.DeleteEntityAction.Result.NO_DEPENDENT_ITEMS_TOUCHED, 0);
+					String type = intent.getStringExtra(SaveDataService.Contract.DeleteEntityAction.Parameters.ENTITY_TYPE);
+					if (type.equals(SaveDataService.Contract.DeleteEntityAction.Parameters.TYPES.BIKE)) {
 						//  Deleted %1$d bike with %2$d event(s).
 						Toast.makeText(getActivity(), String.format(getString(R.string.messageDeleteBikeSuccess), nrItems, nrDependent), Toast.LENGTH_LONG).show();
-					} else if (type.equals(MasterDataContract.Type.Values.TAG_TYPE)) {
+					} else if (type.equals(SaveDataService.Contract.DeleteEntityAction.Parameters.TYPES.TAG_TYPE)) {
 						// Deleted %1$d tag type.
 						Toast.makeText(getActivity(), String.format(getString(R.string.messageDeleteTagTypesSuccess), nrItems), Toast.LENGTH_LONG).show();
-					} else if (type.equals(MasterDataContract.Type.Values.TAG)) {
+					} else if (type.equals(SaveDataService.Contract.DeleteEntityAction.Parameters.TYPES.TAG)) {
 						//  Deleted %1$d bike with %2$d event(s).
 						Toast.makeText(getActivity(), String.format(getString(R.string.messageDeleteTagsSuccess), nrItems), Toast.LENGTH_LONG).show();
 					}
@@ -94,6 +96,7 @@ public class MasterDataDetailFragment extends Fragment {
 			}
 		}
 	};
+
 	private Bike bike;
 	private TagType tagType;
 	private Tag tag;
@@ -180,28 +183,30 @@ public class MasterDataDetailFragment extends Fragment {
 	}
 
 	/**
-	 * Returns true, if there Tags  exists for the given TagType. Otherwise false.
+	 * Returns true, if there doesn't exist no deleted Tags for the given TagType. Otherwise false.
 	 */
 	private boolean hasTags(TagType tagType) {
 
-		if (tagType == null) {
-			return false;
-		}
+		return (new EntityLoader(this.getActivity())).hasTags(tagType);
 
-		ContentResolver cr = getActivity().getContentResolver();
-		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_TAGS
-				, BikeHistProvider.BikeHistContract.QUERY_COUNT_PROJECTION
-				, BikeHistProvider.BikeHistContract.Tables.Tag.TagTypeId.NAME + "=?"
-				, new String[]{tagType.getId().toString()}
-				, null);
-		if (c == null) {
-			return false;
-		} else {
-			c.moveToFirst();
-			int i = c.getInt(0);
-			c.close();
-			return i > 0;
-		}
+//		if (tagType == null) {
+//			return false;
+//		}
+//
+//		ContentResolver cr = getActivity().getContentResolver();
+//		Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.Tag.URI
+//				, BikeHistProvider.BikeHistContract.QUERY_COUNT_PROJECTION
+//				, BikeHistProvider.BikeHistContract.Tables.Tag.TagTypeId.NAME_STRING + "=?"
+//				, new String[]{tagType.getId().toString()}
+//				, null);
+//		if (c == null) {
+//			return false;
+//		} else {
+//			c.moveToFirst();
+//			int i = c.getInt(0);
+//			c.close();
+//			return i > 0;
+//		}
 	}
 
 	/**
@@ -209,13 +214,14 @@ public class MasterDataDetailFragment extends Fragment {
 	 */
 	private boolean hasEvents(Tag tag) {
 
+		//TODO move to EntityLoader
 		if (tag == null) {
 			return false;
 		}
 
 		// Count entries
 		ContentResolver cr = getActivity().getContentResolver();
-		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_EVENTS
+		Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.Event.URI
 				, BikeHistProvider.BikeHistContract.QUERY_COUNT_PROJECTION
 				, BikeHistProvider.BikeHistContract.Tables.Event.TagId.NAME + "=?"
 				, new String[]{tag.getId().toString()}
@@ -259,16 +265,21 @@ public class MasterDataDetailFragment extends Fragment {
 	 */
 	private void deleteItem() {
 		Intent intent = new Intent(getActivity(), SaveDataService.class);
-		intent.putExtra(SaveDataService.Contract.ACTION, SaveDataService.Contract.DeleteMasterDataAction.NAME);
+		intent.putExtra(SaveDataService.Contract.ACTION, SaveDataService.Contract.DeleteEntityAction.NAME);
 		if (bike != null) {
-			intent.putExtra(SaveDataService.Contract.DeleteMasterDataAction.Parameters.ITEM_ID, bike.getId().toString());
-			intent.putExtra(MasterDataContract.Type.NAME, MasterDataContract.Type.Values.BIKE);
+			intent.putExtra(SaveDataService.Contract.DeleteEntityAction.Parameters.ENTITY_ID, bike.getId().toString());
+			intent.putExtra(SaveDataService.Contract.DeleteEntityAction.Parameters.ENTITY_TYPE,
+					SaveDataService.Contract.DeleteEntityAction.Parameters.TYPES.BIKE);
+
 		} else if (tagType != null) {
-			intent.putExtra(SaveDataService.Contract.DeleteMasterDataAction.Parameters.ITEM_ID, tagType.getId().toString());
-			intent.putExtra(MasterDataContract.Type.NAME, MasterDataContract.Type.Values.TAG_TYPE);
+			intent.putExtra(SaveDataService.Contract.DeleteEntityAction.Parameters.ENTITY_ID, tagType.getId().toString());
+			intent.putExtra(SaveDataService.Contract.DeleteEntityAction.Parameters.ENTITY_TYPE,
+					SaveDataService.Contract.DeleteEntityAction.Parameters.TYPES.TAG_TYPE);
+
 		} else if (tag != null) {
-			intent.putExtra(SaveDataService.Contract.DeleteMasterDataAction.Parameters.ITEM_ID, tag.getId().toString());
-			intent.putExtra(MasterDataContract.Type.NAME, MasterDataContract.Type.Values.TAG);
+			intent.putExtra(SaveDataService.Contract.DeleteEntityAction.Parameters.ENTITY_ID, tag.getId().toString());
+			intent.putExtra(SaveDataService.Contract.DeleteEntityAction.Parameters.ENTITY_TYPE,
+					SaveDataService.Contract.DeleteEntityAction.Parameters.TYPES.TAG);
 		}
 		getActivity().startService(intent);
 	}
@@ -290,18 +301,21 @@ public class MasterDataDetailFragment extends Fragment {
 				ContentResolver cr = getActivity().getContentResolver();
 
 			/* uri            The URI, using the content:// scheme, for the content to retrieve.
-	           projection     A list of which columns to return. Passing null will return all columns, which is inefficient.
+		       projection     A list of which columns to return. Passing null will return all columns, which is inefficient.
 			   selection      A filter declaring which rows to return, formatted as an SQL WHERE clause (excluding the WHERE itself). Passing null will return all rows for the given URI.
 			   selectionArgs  You may include ?s in selection, which will be replaced by the values from selectionArgs, in the order that they appear in the selection. The values will be bound as Strings.
 			   sortOrder      How to order the rows, formatted as an SQL ORDER BY clause (excluding the ORDER BY itself). Passing null will use the default sort order, which may be unordered.*/
-				Cursor c = cr.query(BikeHistProvider.CONTENT_URI_BIKES, //
+				Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.Bike.URI, //
 						null, //
 						BikeHistProvider.BikeHistContract.Tables.Bike.Id.NAME + "=?", //
 						new String[]{getArguments().getString(Contract.Parameter.ITEM_ID)}, //
 						null);
 
 				//Edit existing Bike
-				if (c.getCount() == 1) {
+				if (c.getCount() > 0) {
+					if (c.getCount() > 1)
+						Log.w(TAG, "Found more than one Bike for ID, take first one.");
+
 					newEntry = false;
 					c.moveToFirst();
 					bike = EntityUtilsFactory.createBikeUtils(getActivity()).build(c);
@@ -333,14 +347,16 @@ public class MasterDataDetailFragment extends Fragment {
 			   selection      A filter declaring which rows to return, formatted as an SQL WHERE clause (excluding the WHERE itself). Passing null will return all rows for the given URI.
 			   selectionArgs  You may include ?s in selection, which will be replaced by the values from selectionArgs, in the order that they appear in the selection. The values will be bound as Strings.
 			   sortOrder      How to order the rows, formatted as an SQL ORDER BY clause (excluding the ORDER BY itself). Passing null will use the default sort order, which may be unordered.*/
-				Cursor c = cr.query(BikeHistProvider.CONTENT_URI_TAG_TYPES, //
+				Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.TagType.URI, //
 						null, //
 						BikeHistProvider.BikeHistContract.Tables.TagType.Id.NAME + "=?", //
 						new String[]{getArguments().getString(Contract.Parameter.ITEM_ID)}, //
 						null);
 
 				//Edit existing Bike
-				if (c.getCount() == 1) {
+				if (c.getCount() > 0) {
+					if (c.getCount() > 1)
+						Log.w(TAG, "Found more than one TagType for ID, take first one.");
 					newEntry = false;
 					c.moveToFirst();
 					tagType = EntityUtilsFactory.createTagTypeUtils(getActivity()).build(c);
@@ -370,14 +386,16 @@ public class MasterDataDetailFragment extends Fragment {
 			   selection      A filter declaring which rows to return, formatted as an SQL WHERE clause (excluding the WHERE itself). Passing null will return all rows for the given URI.
 			   selectionArgs  You may include ?s in selection, which will be replaced by the values from selectionArgs, in the order that they appear in the selection. The values will be bound as Strings.
 			   sortOrder      How to order the rows, formatted as an SQL ORDER BY clause (excluding the ORDER BY itself). Passing null will use the default sort order, which may be unordered.*/
-				Cursor c = cr.query(BikeHistProvider.CONTENT_URI_TAGS, //
+				Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.Tag.URI, //
 						null, //
 						BikeHistProvider.BikeHistContract.Tables.Tag.Id.NAME + "=?", //
 						new String[]{getArguments().getString(Contract.Parameter.ITEM_ID)}, //
 						null);
 
 				//Edit existing Bike
-				if (c.getCount() == 1) {
+				if (c.getCount() > 0) {
+					if (c.getCount() > 1)
+						Log.w(TAG, "Found more than one Tag for ID, take first one.");
 					newEntry = false;
 					c.moveToFirst();
 					tag = EntityUtilsFactory.createTagUtils(getActivity()).build(c);
@@ -395,7 +413,8 @@ public class MasterDataDetailFragment extends Fragment {
 			}
 		}
 
-		LocalBroadcastManager.getInstance(getActivity()).registerReceiver(broadcastReceiver, new IntentFilter(SaveDataService.Contract.INTENT_NAME));
+		LocalBroadcastManager.getInstance(getActivity())
+				.registerReceiver(broadcastReceiver, new IntentFilter(SaveDataService.Contract.INTENT_NAME));
 
 	}
 
@@ -515,7 +534,7 @@ public class MasterDataDetailFragment extends Fragment {
 			tagTypeSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
 			ContentResolver cr = getActivity().getContentResolver();
-			Cursor c = cr.query(BikeHistProvider.CONTENT_URI_TAG_TYPES, null, null, null, null);
+			Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.TagType.URI, null, null, null, null);
 
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -593,9 +612,11 @@ public class MasterDataDetailFragment extends Fragment {
 		String where = BikeHistProvider.BikeHistContract.Tables.Tag.Id.NAME + "=?";
 		String[] args = {tag.getId().toString()};
 
-		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_TAGS, null, where, args, null);
+		tag.setTouchedAt(System.currentTimeMillis());
+
+		Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.Tag.URI, null, where, args, null);
 		if (c.getCount() == 0) {
-			if (cr.insert(BikeHistProvider.CONTENT_URI_TAGS,
+			if (cr.insert(BikeHistProvider.BikeHistContract.Tables.Tag.URI,
 					EntityUtilsFactory.createTagUtils(getActivity()).build(tag)) != null) {
 				Toast.makeText(getActivity(), getString(R.string.messageSaved), Toast.LENGTH_SHORT).show();
 				mCallbacks.onDetailChanged();
@@ -604,7 +625,7 @@ public class MasterDataDetailFragment extends Fragment {
 			}
 		} else {
 			ContentValues cv = EntityUtilsFactory.createTagUtils(getActivity()).build(tag);
-			if (cr.update(BikeHistProvider.CONTENT_URI_TAGS, cv,
+			if (cr.update(BikeHistProvider.BikeHistContract.Tables.Tag.URI, cv,
 					where, args) == 1) {
 				Toast.makeText(getActivity(), getString(R.string.messageSaved), Toast.LENGTH_SHORT).show();
 				mCallbacks.onDetailChanged();
@@ -622,9 +643,12 @@ public class MasterDataDetailFragment extends Fragment {
 		String where = BikeHistProvider.BikeHistContract.Tables.TagType.Id.NAME + "=?";
 		String[] args = {tagType.getId().toString()};
 
-		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_TAG_TYPES, null, where, args, null);
+		tagType.setTouchedAt(System.currentTimeMillis());
+
+
+		Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.TagType.URI, null, where, args, null);
 		if (c.getCount() == 0) {
-			if (cr.insert(BikeHistProvider.CONTENT_URI_TAG_TYPES,
+			if (cr.insert(BikeHistProvider.BikeHistContract.Tables.TagType.URI,
 					EntityUtilsFactory.createTagTypeUtils(getActivity()).build(tagType)) != null) {
 				Toast.makeText(getActivity(), getString(R.string.messageSaved), Toast.LENGTH_SHORT).show();
 				mCallbacks.onDetailChanged();
@@ -633,7 +657,7 @@ public class MasterDataDetailFragment extends Fragment {
 			}
 		} else {
 			ContentValues cv = EntityUtilsFactory.createTagTypeUtils(getActivity()).build(tagType);
-			if (cr.update(BikeHistProvider.CONTENT_URI_TAG_TYPES, cv,
+			if (cr.update(BikeHistProvider.BikeHistContract.Tables.TagType.URI, cv,
 					where, args) == 1) {
 				Toast.makeText(getActivity(), getString(R.string.messageSaved), Toast.LENGTH_SHORT).show();
 				mCallbacks.onDetailChanged();
@@ -652,9 +676,11 @@ public class MasterDataDetailFragment extends Fragment {
 		String where = BikeHistProvider.BikeHistContract.Tables.Bike.Id.NAME + "=?";
 		String[] args = {bike.getId().toString()};
 
-		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_BIKES, null, where, args, null);
+		bike.setTouchedAt(System.currentTimeMillis());
+
+		Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.Bike.URI, null, where, args, null);
 		if (c.getCount() == 0) {
-			if (cr.insert(BikeHistProvider.CONTENT_URI_BIKES,
+			if (cr.insert(BikeHistProvider.BikeHistContract.Tables.Bike.URI,
 					EntityUtilsFactory.createBikeUtils(getActivity()).build(bike)) != null) {
 				Toast.makeText(getActivity(), getString(R.string.messageSaved), Toast.LENGTH_SHORT).show();
 				mCallbacks.onDetailChanged();
@@ -663,7 +689,7 @@ public class MasterDataDetailFragment extends Fragment {
 			}
 		} else {
 			ContentValues cv = EntityUtilsFactory.createBikeUtils(getActivity()).build(bike);
-			if (cr.update(BikeHistProvider.CONTENT_URI_BIKES, cv,
+			if (cr.update(BikeHistProvider.BikeHistContract.Tables.Bike.URI, cv,
 					where, args) == 1) {
 				Toast.makeText(getActivity(), getString(R.string.messageSaved), Toast.LENGTH_SHORT).show();
 				mCallbacks.onDetailChanged();
@@ -712,12 +738,12 @@ public class MasterDataDetailFragment extends Fragment {
 
 	}
 
-//	/** Confirm dialog. Needs argument with Question. Consumer must call setCallbacks(). */
+//	/** Confirm dialog. Needs argument with Question. Consumer must call setConsumerCallbacks(). */
 //	public static class DeleteDialogFragment extends DialogFragment {
 //		public static final String ARG_MESSAGE = "message";
 //		private Callbacks callbacks;
 //
-//		public void setCallbacks(Callbacks callbacks) {
+//		public void setConsumerCallbacks(Callbacks callbacks) {
 //			this.callbacks = callbacks;
 //		}
 //

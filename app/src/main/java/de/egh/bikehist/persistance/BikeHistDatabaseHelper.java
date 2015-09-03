@@ -32,9 +32,6 @@ class BikeHistDatabaseHelper extends SQLiteOpenHelper {
 					+ BikeHistProvider.BikeHistContract.Tables.Event.Distance.NAME + " INTEGER, "
 					+ BikeHistProvider.BikeHistContract.Tables.Event.BikeId.NAME + " TEXT, "
 					+ BikeHistProvider.BikeHistContract.Tables.Event.TagId.NAME + " TEXT, "
-					+ BikeHistProvider.BikeHistContract.Tables.Event.GeoLongitude.NAME + " REAL, "
-					+ BikeHistProvider.BikeHistContract.Tables.Event.GeoLatitude.NAME + " REAL, "
-					+ BikeHistProvider.BikeHistContract.Tables.Event.GeoAltitude.NAME + " REAL, "
 					+ BikeHistProvider.BikeHistContract.Tables.Event.Timestamp.NAME + " INTEGER); ";
 
 	private static final String CREATE_BIKES =

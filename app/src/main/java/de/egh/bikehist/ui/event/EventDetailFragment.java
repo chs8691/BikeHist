@@ -73,38 +73,7 @@ public class EventDetailFragment extends Fragment {
 	 * clicks.
 	 */
 	private Callbacks mCallbacks = sDummyCallbacks;
-	private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
 
-			if (intent.hasExtra(SaveDataService.Contract.ACTION)) {
-				if (intent.getStringExtra(SaveDataService.Contract.ACTION).equals(SaveDataService.Contract.DeleteMasterDataAction.NAME)) {
-
-					//Error handling
-					if (intent.getBooleanExtra(SaveDataService.Contract.DeleteMasterDataAction.Result.ERROR, false)) {
-						Toast.makeText(getActivity(), getString(R.string.messageDeleteError), Toast.LENGTH_LONG).show();
-						return;
-					}
-
-					//Success reporting
-					int nrItems = intent.getIntExtra(SaveDataService.Contract.DeleteMasterDataAction.Result.NO_MAIN_MASTER_DATA_DELETED, 0);
-					int nrDependent = intent.getIntExtra(SaveDataService.Contract.DeleteMasterDataAction.Result.NO_DEPENDENT_ITEMS_TOUCHED, 0);
-					String type = intent.getStringExtra(MasterDataContract.Type.NAME);
-					if (type.equals(MasterDataContract.Type.Values.BIKE)) {
-						//  Deleted %1$d bike with %2$d event(s).
-						Toast.makeText(getActivity(), String.format(getString(R.string.messageDeleteBikeSuccess), nrItems, nrDependent), Toast.LENGTH_LONG).show();
-					} else if (type.equals(MasterDataContract.Type.Values.TAG_TYPE)) {
-						// Deleted %1$d tag type.
-						Toast.makeText(getActivity(), String.format(getString(R.string.messageDeleteTagTypesSuccess), nrItems), Toast.LENGTH_LONG).show();
-					} else if (type.equals(MasterDataContract.Type.Values.TAG)) {
-						//  Deleted %1$d bike with %2$d event(s).
-						Toast.makeText(getActivity(), String.format(getString(R.string.messageDeleteTagsSuccess), nrItems), Toast.LENGTH_LONG).show();
-					}
-					mCallbacks.onEventChanged();
-				}
-			}
-		}
-	};
 	private Event event;
 	private Bike bike;
 	private TagType tagType;
@@ -189,7 +158,7 @@ public class EventDetailFragment extends Fragment {
 		}
 
 		ContentResolver cr = getActivity().getContentResolver();
-		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_TAGS
+		Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.Tag.URI
 				, BikeHistProvider.BikeHistContract.QUERY_COUNT_PROJECTION
 				, BikeHistProvider.BikeHistContract.Tables.Tag.TagTypeId.NAME + "=?"
 				, new String[]{tagType.getId().toString()}
@@ -214,7 +183,7 @@ public class EventDetailFragment extends Fragment {
 
 		// Count entries
 		ContentResolver cr = getActivity().getContentResolver();
-		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_EVENTS
+		Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.Event.URI
 				, BikeHistProvider.BikeHistContract.QUERY_COUNT_PROJECTION
 				, BikeHistProvider.BikeHistContract.Tables.Event.TagId.NAME + "=?"
 				, new String[]{tag.getId().toString()}
@@ -230,7 +199,7 @@ public class EventDetailFragment extends Fragment {
 		Cursor c = null;
 		try {
 			ContentResolver cr = getActivity().getContentResolver();
-			c = cr.query(BikeHistProvider.CONTENT_URI_TAGS, null,
+			c = cr.query(BikeHistProvider.BikeHistContract.Tables.Tag.URI, null,
 					BikeHistProvider.BikeHistContract.Tables.Tag.Id.NAME + "=?",
 					new String[]{id}, null);
 			if (c.getCount() > 0) {
@@ -251,7 +220,7 @@ public class EventDetailFragment extends Fragment {
 		Cursor c = null;
 		try {
 			ContentResolver cr = getActivity().getContentResolver();
-			c = cr.query(BikeHistProvider.CONTENT_URI_TAG_TYPES, null,
+			c = cr.query(BikeHistProvider.BikeHistContract.Tables.TagType.URI, null,
 					BikeHistProvider.BikeHistContract.Tables.TagType.Id.NAME + "=?",
 					new String[]{id}, null);
 			if (c.getCount() > 0) {
@@ -272,7 +241,7 @@ public class EventDetailFragment extends Fragment {
 		Cursor c = null;
 		try {
 			ContentResolver cr = getActivity().getContentResolver();
-			c = cr.query(BikeHistProvider.CONTENT_URI_BIKES, null,
+			c = cr.query(BikeHistProvider.BikeHistContract.Tables.Bike.URI, null,
 					BikeHistProvider.BikeHistContract.Tables.Bike.Id.NAME + "=?",
 					new String[]{id}, null);
 			if (c.getCount() > 0) {
@@ -300,7 +269,7 @@ public class EventDetailFragment extends Fragment {
 			   selection      A filter declaring which rows to return, formatted as an SQL WHERE clause (excluding the WHERE itself). Passing null will return all rows for the given URI.
 			   selectionArgs  You may include ?s in selection, which will be replaced by the values from selectionArgs, in the order that they appear in the selection. The values will be bound as Strings.
 			   sortOrder      How to order the rows, formatted as an SQL ORDER BY clause (excluding the ORDER BY itself). Passing null will use the default sort order, which may be unordered.*/
-			c = cr.query(BikeHistProvider.CONTENT_URI_EVENTS, //
+			c = cr.query(BikeHistProvider.BikeHistContract.Tables.Event.URI, //
 					null, //
 					BikeHistProvider.BikeHistContract.Tables.Event.Id.NAME + "=?", //
 					new String[]{id}, //
@@ -356,24 +325,62 @@ public class EventDetailFragment extends Fragment {
 		super.onPrepareOptionsMenu(menu);
 	}
 
+//	/**
+//	 * Deletes event_item asynchronous.
+//	 */
+//	private void deleteItem() {
+//		ContentResolver cr = getActivity().getContentResolver();
+//		int res = cr.delete(BikeHistProvider.BikeHistContract.Tables.Event.URI,
+//				BikeHistProvider.BikeHistContract.Tables.Event.Id.NAME_STRING + "=?",
+//				new String[]{event.getId().toString()}
+//		);
+//
+//		if (res > 0)
+//			Toast.makeText(getActivity(), String.format(getString(R.string.messageDeleteEventSuccess), res), Toast.LENGTH_LONG).show();
+//		else {
+//			Toast.makeText(getActivity(), getString(R.string.messageDeleteError), Toast.LENGTH_LONG).show();
+//		}
+//
+//		mCallbacks.onEventChanged();
+//
+//	}
+	private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+
+			if (intent.hasExtra(SaveDataService.Contract.ACTION)) {
+				if (intent.getStringExtra(SaveDataService.Contract.ACTION).equals(SaveDataService.Contract.DeleteEntityAction.NAME)) {
+
+					//Error handling
+					if (intent.getBooleanExtra(SaveDataService.Contract.DeleteEntityAction.Result.ERROR, false)) {
+						Toast.makeText(getActivity(), getString(R.string.messageDeleteError), Toast.LENGTH_LONG).show();
+						return;
+					}
+
+					//Success reporting
+					int nrItems = intent.getIntExtra(SaveDataService.Contract.DeleteEntityAction.Result.NO_MAIN_ENTITY_DELETED, 0);
+					String type = intent.getStringExtra(SaveDataService.Contract.DeleteEntityAction.Parameters.ENTITY_TYPE);
+					if (type.equals(SaveDataService.Contract.DeleteEntityAction.Parameters.TYPES.EVENT)) {
+						//  Deleted %1$d event(s).
+						Toast.makeText(getActivity(), String.format(getString(R.string.messageDeleteEventSuccess), nrItems), Toast.LENGTH_LONG)
+								.show();
+					}
+					mCallbacks.onEventChanged();
+				}
+			}
+		}
+	};
+
 	/**
 	 * Deletes event_item asynchronous.
 	 */
 	private void deleteItem() {
-		ContentResolver cr = getActivity().getContentResolver();
-		int res = cr.delete(BikeHistProvider.CONTENT_URI_EVENTS,
-				BikeHistProvider.BikeHistContract.Tables.Event.Id.NAME + "=?",
-				new String[]{event.getId().toString()}
-		);
-
-		if (res > 0)
-			Toast.makeText(getActivity(), String.format(getString(R.string.messageDeleteEventSuccess), res), Toast.LENGTH_LONG).show();
-		else {
-			Toast.makeText(getActivity(), getString(R.string.messageDeleteError), Toast.LENGTH_LONG).show();
-		}
-
-		mCallbacks.onEventChanged();
-
+		Intent intent = new Intent(getActivity(), SaveDataService.class);
+		intent.putExtra(SaveDataService.Contract.ACTION, SaveDataService.Contract.DeleteEntityAction.NAME);
+			intent.putExtra(SaveDataService.Contract.DeleteEntityAction.Parameters.ENTITY_ID, event.getId().toString());
+			intent.putExtra(SaveDataService.Contract.DeleteEntityAction.Parameters.ENTITY_TYPE,
+					SaveDataService.Contract.DeleteEntityAction.Parameters.TYPES.EVENT);
+		getActivity().startService(intent);
 	}
 
 	@Override
@@ -406,13 +413,12 @@ public class EventDetailFragment extends Fragment {
 	             long distance,
 	             UUID bikeId,
 	             UUID tagId,
-	             GeoLocation geoLocation,
 	             long timestamp,
 	             long diffDistance,
 	             long diffTimestamp
 	             */
 			event = new Event(UUID.randomUUID(), "", false, System.currentTimeMillis(), 0L,
-					bike.getId(), null, null, System.currentTimeMillis(), 0L, 0L);
+					bike.getId(), null, System.currentTimeMillis(), 0L, 0L);
 		}
 
 		LocalBroadcastManager.getInstance(getActivity()).registerReceiver(broadcastReceiver, new IntentFilter(SaveDataService.Contract.INTENT_NAME));
@@ -464,7 +470,7 @@ public class EventDetailFragment extends Fragment {
 		tagSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
 		ContentResolver cr = getActivity().getContentResolver();
-		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_TAGS, null,
+		Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.Tag.URI, null,
 				BikeHistProvider.BikeHistContract.Tables.Tag.TagTypeId.NAME + "=?",
 				new String[]{tagType.getId().toString()}, null);
 
@@ -564,10 +570,12 @@ public class EventDetailFragment extends Fragment {
 		String where = BikeHistProvider.BikeHistContract.Tables.Event.Id.NAME + "=?";
 		String[] args = {event.getId().toString()};
 
-		Cursor c = cr.query(BikeHistProvider.CONTENT_URI_EVENTS, null, where, args, null);
+		event.setTouchedAt(System.currentTimeMillis());
+
+		Cursor c = cr.query(BikeHistProvider.BikeHistContract.Tables.Event.URI, null, where, args, null);
 		if (c.getCount() == 0) {
 			ContentValues v = EntityUtilsFactory.createEventUtils(getActivity()).build(event);
-			if (cr.insert(BikeHistProvider.CONTENT_URI_EVENTS,
+			if (cr.insert(BikeHistProvider.BikeHistContract.Tables.Event.URI,
 					EntityUtilsFactory.createEventUtils(getActivity()).build(event)) != null) {
 				Toast.makeText(getActivity(), getString(R.string.messageSaved), Toast.LENGTH_SHORT).show();
 				mCallbacks.onEventChanged();
@@ -576,7 +584,7 @@ public class EventDetailFragment extends Fragment {
 			}
 		} else {
 			ContentValues cv = EntityUtilsFactory.createEventUtils(getActivity()).build(event);
-			if (cr.update(BikeHistProvider.CONTENT_URI_EVENTS, cv,
+			if (cr.update(BikeHistProvider.BikeHistContract.Tables.Event.URI, cv,
 					where, args) == 1) {
 				Toast.makeText(getActivity(), getString(R.string.messageSaved), Toast.LENGTH_SHORT).show();
 				mCallbacks.onEventChanged();
@@ -653,7 +661,7 @@ public class EventDetailFragment extends Fragment {
 
 
 	/**
-	 * Confirm dialog. Needs argument with Question. Consumer must call setCallbacks().
+	 * Confirm dialog. Needs argument with Question. Consumer must call setConsumerCallbacks().
 	 */
 	public static class DeleteDialogFragment extends DialogFragment {
 		public static final String ARG_MESSAGE = "message";
