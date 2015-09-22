@@ -16,7 +16,7 @@
         android:title="@string/actionSynchronize"
         android:enabled="false"
         android:visible="false"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="never"/>
 
     <item
         android:id="@+id/actionConfiguration"

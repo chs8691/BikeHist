@@ -1,5 +1,4 @@
-<manifest
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
 
@@ -7,7 +6,7 @@
         <provider
             android:name="de.egh.bikehist.persistance.BikeHistProvider"
             android:authorities="de.egh.bikehist.free.provider.bikehist"
-            android:exported="false"/>
+            android:exported="false" />
 
     </application>
 

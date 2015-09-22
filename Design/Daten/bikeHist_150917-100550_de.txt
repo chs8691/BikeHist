@@ -1,0 +1,129 @@
+{
+ "timestamp": 1442477150213,
+ "bikes": [
+  {
+   "id": "6cecda6e-7684-4ae0-8160-98eb94f07020",
+   "name": "Campagnolo Rennrad",
+   "touchedAt": 1442476955616,
+   "frameNumber": "CA-0815-456"
+  },
+  {
+   "id": "5b3dbc7d-fca1-4996-9bc5-08918732f737",
+   "name": "Gaint Team XLS MTB",
+   "touchedAt": 1442476800238,
+   "frameNumber": "G-4711-123"
+  }
+ ],
+ "tagTypes": [
+  {
+   "id": "c296fafe-59a1-4904-a29e-a8c1e69684c4",
+   "name": "Antrieb",
+   "touchedAt": 1442476404936
+  },
+  {
+   "id": "6e3334d8-df5f-4cfa-b9ef-5e180b2e4df5",
+   "name": "Komponenten",
+   "touchedAt": 1442476670127
+  },
+  {
+   "id": "fd0d2c49-ee21-4160-93a8-5ba61faa6443",
+   "name": "Rad hinten",
+   "touchedAt": 1442476635924
+  },
+  {
+   "id": "19683a39-ad88-4414-ac95-2ed963d6db72",
+   "name": "Rad vorne",
+   "touchedAt": 1442476627196
+  },
+  {
+   "id": "8c2a19e0-c728-4b27-b24f-96e1f297dc88",
+   "name": "Rahmen",
+   "touchedAt": 1442476446745
+  }
+ ],
+ "tags": [
+  {
+   "id": "cf850560-f27a-4920-9ee8-2645cf4f49d7",
+   "name": "Felge",
+   "touchedAt": 1442476605506,
+   "tagTypeId": "19683a39-ad88-4414-ac95-2ed963d6db72"
+  },
+  {
+   "id": "9ea79cca-577b-4797-b2b0-8b44e84329e2",
+   "name": "Felge",
+   "touchedAt": 1442476714217,
+   "tagTypeId": "fd0d2c49-ee21-4160-93a8-5ba61faa6443"
+  },
+  {
+   "id": "60dd845e-8f2d-48c9-acbd-b4dc38257bda",
+   "name": "Kette",
+   "touchedAt": 1442476476107,
+   "tagTypeId": "c296fafe-59a1-4904-a29e-a8c1e69684c4"
+  },
+  {
+   "id": "6cb5baf3-463a-40c6-b497-7189c22e7f30",
+   "name": "Kettenblatt groß",
+   "touchedAt": 1442476545478,
+   "tagTypeId": "c296fafe-59a1-4904-a29e-a8c1e69684c4"
+  },
+  {
+   "id": "9d4f4d1d-715a-42d8-9ea4-05d717aa7f6f",
+   "name": "Kettenblatt klein",
+   "touchedAt": 1442476516082,
+   "tagTypeId": "c296fafe-59a1-4904-a29e-a8c1e69684c4"
+  },
+  {
+   "id": "7a441c87-2e45-48e4-bc69-36252e1c498f",
+   "name": "Kettenblatt mittel",
+   "touchedAt": 1442476532948,
+   "tagTypeId": "c296fafe-59a1-4904-a29e-a8c1e69684c4"
+  },
+  {
+   "id": "f4451353-6a01-4fcf-9bc7-26c5eef566a5",
+   "name": "Mantel",
+   "touchedAt": 1442476585620,
+   "tagTypeId": "19683a39-ad88-4414-ac95-2ed963d6db72"
+  },
+  {
+   "id": "62dd29da-59bb-4fc1-b927-0999d680044d",
+   "name": "Mantel",
+   "touchedAt": 1442476701938,
+   "tagTypeId": "fd0d2c49-ee21-4160-93a8-5ba61faa6443"
+  },
+  {
+   "id": "84268477-a978-4c58-bc2e-b30e0c177ee1",
+   "name": "Ritzelpaket",
+   "touchedAt": 1442476559842,
+   "tagTypeId": "c296fafe-59a1-4904-a29e-a8c1e69684c4"
+  }
+ ],
+ "events": [
+  {
+   "id": "d24abf7e-1517-4a06-9857-d7d4795d48e8",
+   "name": "SAM PC-69",
+   "touchedAt": 1442477023149,
+   "bikeId": "5b3dbc7d-fca1-4996-9bc5-08918732f737",
+   "distance": 0,
+   "tagId": "60dd845e-8f2d-48c9-acbd-b4dc38257bda",
+   "timestamp": 1409731372124
+  },
+  {
+   "id": "a787e4b4-6c3b-4a8c-974f-daaf0f93c58f",
+   "name": "KCL Gold",
+   "touchedAt": 1442477065926,
+   "bikeId": "5b3dbc7d-fca1-4996-9bc5-08918732f737",
+   "distance": 3025000,
+   "tagId": "60dd845e-8f2d-48c9-acbd-b4dc38257bda",
+   "timestamp": 1424336625906
+  },
+  {
+   "id": "1aa184c5-cca9-42d0-b05f-1c85c431b865",
+   "name": "Sam PC-59",
+   "touchedAt": 1442477107352,
+   "bikeId": "5b3dbc7d-fca1-4996-9bc5-08918732f737",
+   "distance": 6096000,
+   "tagId": "60dd845e-8f2d-48c9-acbd-b4dc38257bda",
+   "timestamp": 1442477070277
+  }
+ ]
+}

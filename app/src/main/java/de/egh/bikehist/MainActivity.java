@@ -25,6 +25,7 @@ import android.widget.ListView;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import de.egh.bikehist.importing.ImportDialog;
 import de.egh.bikehist.model.Bike;
 import de.egh.bikehist.model.EntityLoader;
 import de.egh.bikehist.model.Tag;
@@ -35,7 +36,6 @@ import de.egh.bikehist.persistance.SaveDataService;
 import de.egh.bikehist.sync.SyncController;
 import de.egh.bikehist.ui.EmptyContentFragment;
 import de.egh.bikehist.ui.HelpActivity;
-import de.egh.bikehist.importing.ImportDialog;
 import de.egh.bikehist.ui.ListCallbacks;
 import de.egh.bikehist.ui.drawer.DrawerController;
 import de.egh.bikehist.ui.event.EventContract;
@@ -46,6 +46,9 @@ import de.egh.bikehist.ui.masterdata.AdministratorActivity;
 
 
 /**
+ * TODO 150917 Notifications beim export sind englisch
+ * TODO 150917 Tablet, EventEdit: Schrift übereinander. Screenshots ergänzen
+ * TODO 150917 Auf tablet liegt das Verzeichnis nicht auf der Karte, steht aber so in der Anleitung
  * TODO Backstack from ImportDialog must update Drawer (deleted Tags already visible)
  * and: BAck navigation in import dialog must cancel SErvice
  * TODO Synchronisation: Broadcast mit Ergebnis abfangen
@@ -465,8 +468,11 @@ public class MainActivity extends AppCompatActivity implements ListCallbacks,
 		menu.findItem(R.id.actionConfiguration).setEnabled(enable);
 		menu.findItem(R.id.actionConfiguration).setVisible(enable);
 
-		menu.findItem(R.id.actionSync).setEnabled(enable);
-		menu.findItem(R.id.actionSync).setVisible(enable);
+		// BuildConfig was set in app's build gradle
+		if(BuildConfig.HAS_SYNC) {
+			menu.findItem(R.id.actionSync).setEnabled(enable);
+			menu.findItem(R.id.actionSync).setVisible(enable);
+		}
 
 		menu.findItem(R.id.actionExport).setEnabled(enable);
 		menu.findItem(R.id.actionExport).setVisible(enable);
