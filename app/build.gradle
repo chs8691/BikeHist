@@ -1,18 +1,16 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 22
+    compileSdkVersion 23
     buildToolsVersion '21.1.2'
 
     defaultConfig {
         applicationId "de.egh.bikehist"
         minSdkVersion 15
-        targetSdkVersion 22
+        targetSdkVersion 23
         versionName "1.0.0-0001"
         versionCode  getBuildNrAsInteger(versionName)
     }
-
- 
 
     /** Replace default file*/
 //     applicationVariants.all { variant ->
@@ -23,11 +21,13 @@ android {
             applicationId  "de.egh.bikehist.free"
             versionName "1.0.0-0001-free"
             versionCode  getBuildNrAsInteger(versionName)
+            buildConfigField "boolean", "HAS_SYNC", "false"
         }
         pro {
             applicationId  "de.egh.bikehist.pro"
             versionName "1.0.0-0001-pro"
             versionCode  getBuildNrAsInteger(versionName)
+            buildConfigField "boolean", "HAS_SYNC", "true"
         }
     }
     buildTypes {

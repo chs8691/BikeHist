@@ -21,7 +21,7 @@
     <string name="tagNameTyre">Mantel</string>
     <string name="tagTypeNameMaintenance">Wartung</string>
     <string name="tagTypeNameTimeEvent">Zeitereignis</string>
-    <string name="titleCreateBike">Fahhrad anlegen</string>
+    <string name="titleCreateBike">Fahrrad anlegen</string>
     <string name="titleCreateEvent">Ereignis anlegen</string>
     <string name="titleCreateTag">Tag anlegen</string>
     <string name="titleCreateTagType">Tagtyp anlegen</string>
@@ -80,4 +80,5 @@
     <string name="actionHelp">Hilfe</string>
     <string name="title_activity_help">BikeHist Hilfe</string>
     <string name="resourceHelpFile">help_de.html</string>
+    <string name="titleImportFunctionName">Import</string>
 </resources>
